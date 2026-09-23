@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=JottaBox
+Comment=Sessão de console JottaBox
+Exec=/usr/local/bin/jottabox-session
+TryExec=/usr/local/bin/jottabox-session
+Type=Application
+DesktopNames=JottaBox
