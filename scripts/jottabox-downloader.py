@@ -9,13 +9,23 @@ CFG=os.path.join(HOME,".config","jottabox-console")
 STATE=os.path.join(HOME,".local","share","jottabox")
 ASSETS=os.path.join(STATE,"assets")
 DEST=os.path.join(HOME,"Downloads","rom")
-LOG=os.path.join(HOME,"jotabox-download.log")
+LOG=os.path.join(HOME,"jottabox-download.log")
 GUI_LOG=os.path.join(HOME,"jotabox-downloader-gui.log")
 SOURCES=os.path.join(CFG,"download-sources.json")
 HISTORY=os.path.join(CFG,"download-history.json")
 os.makedirs(CFG,exist_ok=True); os.makedirs(DEST,exist_ok=True)
 
 ALLOWED={".zip",".7z",".nes",".sfc",".smc",".gb",".gbc",".gba",".nds",".n64",".z64",".v64",".md",".gen",".smd",".32x",".sms",".gg",".pce",".a26",".a52",".a78",".lnx",".ngp",".ngc",".ws",".wsc",".cue",".bin",".gdi",".chd",".iso",".cso",".pbp",".cdi",".rvz",".gcm",".gcz",".wbfs"}
+
+def looks_like_file_name(name):
+    clean=urllib.parse.unquote(name).rstrip("/")
+    return os.path.splitext(clean)[1].lower() in ALLOWED
+
+def force_file_url(url):
+    # Alguns servidores (ex.: visualizadores de arquivo) exibem uma URL de .iso/.zip
+    # com "/" no fim para permitir navegar dentro do arquivo. Para baixar o arquivo
+    # real, removemos apenas essa barra final.
+    return url[:-1] if url.endswith("/") and looks_like_file_name(url) else url
 
 def crashhook(t,v,tb):
     try:
@@ -87,9 +97,12 @@ def normalize_folder(url):
 def normalize_file(url):
     url=url.strip(); p=urllib.parse.urlparse(url)
     if p.scheme not in ("http","https") or not p.netloc: raise ValueError("URL inválida")
-    name=urllib.parse.unquote(os.path.basename(p.path))
+    clean_path=p.path.rstrip("/")
+    name=urllib.parse.unquote(os.path.basename(clean_path))
     if not name: raise ValueError("A URL não aponta para um arquivo")
     if os.path.splitext(name)[1].lower() not in ALLOWED: raise ValueError("Extensão não reconhecida pelo JottaBox")
+    if p.path.endswith("/"):
+        url=urllib.parse.urlunparse((p.scheme,p.netloc,clean_path,p.params,p.query,p.fragment))
     return url,name
 
 def get_html(url):
@@ -106,9 +119,14 @@ def fetch_entries(root):
         if p.netloc!=rp.netloc or not full.startswith(root): continue
         rel=urllib.parse.unquote(full[len(root):]).strip("/")
         if not rel or "/" in rel: continue
-        is_dir=href.endswith("/"); name=urllib.parse.unquote(rel)
-        if not is_dir and os.path.splitext(name)[1].lower() not in ALLOWED: continue
-        item={"name":name,"url":full if not is_dir or full.endswith("/") else full+"/","kind":"dir" if is_dir else "file"}
+        name=urllib.parse.unquote(rel)
+        # Extensão conhecida tem prioridade sobre "/" final. Isso impede que
+        # Archive.org trate .iso/.zip como pasta navegável dentro do arquivo.
+        file_by_ext=looks_like_file_name(name)
+        is_dir=href.endswith("/") and not file_by_ext
+        if not is_dir and not file_by_ext: continue
+        item_url=force_file_url(full) if file_by_ext else (full if full.endswith("/") else full+"/")
+        item={"name":name.rstrip("/"),"url":item_url,"kind":"file" if file_by_ext else "dir"}
         key=(item["url"],item["kind"])
         if key not in seen: seen.add(key); result.append(item)
     result.sort(key=lambda e:(0 if e["kind"]=="dir" else 1,e["name"].lower())); return result
@@ -129,18 +147,19 @@ def crawl_files(folder_url,base_root,progress_cb=None):
             if href in ("../","./","/") or href.startswith("?"): continue
             full=urllib.parse.urljoin(url,href); p=urllib.parse.urlparse(full)
             if p.netloc!=root_host or not full.startswith(folder_url): continue
-            if href.endswith("/"):
+            name=urllib.parse.unquote(p.path.rstrip("/").rsplit("/",1)[-1])
+            if looks_like_file_name(name):
+                file_url=force_file_url(full)
+                if file_url not in seen_files:
+                    seen_files.add(file_url); files.append(file_url)
+            elif href.endswith("/"):
                 if full not in seen_dirs: todo.append(full)
-            else:
-                name=urllib.parse.unquote(p.path.rsplit("/",1)[-1])
-                if os.path.splitext(name)[1].lower() in ALLOWED and full not in seen_files:
-                    seen_files.add(full); files.append(full)
     return files
 
 def dest_for_url(url,base_root=None,direct=False):
     up=urllib.parse.urlparse(url)
     if direct or not base_root:
-        name=urllib.parse.unquote(os.path.basename(up.path)).replace("..","_"); return os.path.join(DEST,name)
+        name=urllib.parse.unquote(os.path.basename(up.path.rstrip("/"))).replace("..","_"); return os.path.join(DEST,name)
     rp=urllib.parse.urlparse(base_root); base_path=rp.path
     rel=urllib.parse.unquote(up.path[len(base_path):]).lstrip("/") if up.path.startswith(base_path) else urllib.parse.unquote(up.path).lstrip("/")
     return os.path.join(DEST,rel.replace("..","_"))
