@@ -18,63 +18,72 @@ fi
 
 say "JottaBox - instalação nova"
 
-# 1) Dependências do sistema
-say "Instalando dependências"
-sudo apt update
-sudo apt install -y   git curl wget unzip p7zip-full rsync   python3 python3-pygame python3-evdev   xdotool zenity joystick jstest-gtk   gamemode flatpak ca-certificates
-
-# 2) Flathub / emuladores
-say "Configurando Flathub"
-flatpak remote-add --if-not-exists flathub   https://flathub.org/repo/flathub.flatpakrepo
-
-say "Instalando emuladores principais"
-for app in   org.libretro.RetroArch   org.ppsspp.PPSSPP   org.DolphinEmu.dolphin-emu   net.pcsx2.PCSX2   com.valvesoftware.Steam
-do
-  if flatpak info "$app" >/dev/null 2>&1; then
-    echo "OK: $app já instalado"
-  else
-    flatpak install -y flathub "$app"
-  fi
-done
-
-mkdir -p "$STATE" "$BIN" "$CFG" "$HOME/ROMs" "$HOME/Downloads/rom"
-
-# 3) Resolve seed/runtime para instalação realmente limpa.
-resolve_runtime() {
-  if [[ -n "$RUNTIME_ARG" && -f "$RUNTIME_ARG" ]]; then
-    printf '%s' "$RUNTIME_ARG"
-    return 0
-  fi
-  if [[ -n "${JOTTABOX_RUNTIME:-}" && -f "${JOTTABOX_RUNTIME}" ]]; then
-    printf '%s' "$JOTTABOX_RUNTIME"
-    return 0
-  fi
-  if [[ -f "$HOME/jottabox-live-runtime.tar.gz" ]]; then
-    printf '%s' "$HOME/jottabox-live-runtime.tar.gz"
-    return 0
-  fi
-  if [[ -f /opt/jottabox-live/runtime.tar.gz ]]; then
-    printf '%s' /opt/jottabox-live/runtime.tar.gz
-    return 0
-  fi
-  if [[ -d /opt/jottabox-live/runtime-home ]]; then
-    printf '%s' /opt/jottabox-live/runtime-home
-    return 0
-  fi
-  return 1
-}
-
+# Detecta se já existe uma base funcional antes de alterar o sistema.
 HAS_BASE=0
 if [[ -x "$BIN/jottabox-console" && -f "$CFG/launcher.py" ]]; then
   HAS_BASE=1
   echo "Instalação JottaBox existente detectada; preservando base."
 fi
 
+resolve_runtime() {
+  if [[ -n "$RUNTIME_ARG" && -f "$RUNTIME_ARG" ]]; then
+    printf '%s' "$RUNTIME_ARG"; return 0
+  fi
+  if [[ -n "${JOTTABOX_RUNTIME:-}" && -f "${JOTTABOX_RUNTIME}" ]]; then
+    printf '%s' "$JOTTABOX_RUNTIME"; return 0
+  fi
+  if [[ -f "$HOME/jottabox-live-runtime.tar.gz" ]]; then
+    printf '%s' "$HOME/jottabox-live-runtime.tar.gz"; return 0
+  fi
+  if [[ -f /opt/jottabox-live/runtime.tar.gz ]]; then
+    printf '%s' /opt/jottabox-live/runtime.tar.gz; return 0
+  fi
+  if [[ -d /opt/jottabox-live/runtime-home ]]; then
+    printf '%s' /opt/jottabox-live/runtime-home; return 0
+  fi
+  return 1
+}
+
+SEED=""
+if [[ "$HAS_BASE" -eq 0 ]]; then
+  SEED="$(resolve_runtime || true)"
+  [[ -n "$SEED" ]] || die "Instalação limpa ainda precisa da base runtime. Nenhuma alteração adicional foi feita. Use: bash install.sh /caminho/jottabox-live-runtime.tar.gz"
+fi
+
+# 1) Dependências do sistema
+say "Instalando dependências"
+sudo apt update
+sudo apt install -y \
+  git curl wget unzip p7zip-full rsync \
+  python3 python3-pygame python3-evdev \
+  xdotool zenity joystick jstest-gtk \
+  gamemode flatpak ca-certificates
+
+# 2) Flathub / emuladores - instalação SYSTEM, portanto com sudo.
+say "Configurando Flathub"
+sudo flatpak --system remote-add --if-not-exists flathub \
+  https://flathub.org/repo/flathub.flatpakrepo
+
+say "Instalando emuladores principais"
+for app in \
+  org.libretro.RetroArch \
+  org.ppsspp.PPSSPP \
+  org.DolphinEmu.dolphin-emu \
+  net.pcsx2.PCSX2 \
+  com.valvesoftware.Steam
+do
+  if flatpak --system info "$app" >/dev/null 2>&1; then
+    echo "OK: $app já instalado"
+  else
+    sudo flatpak --system install -y flathub "$app"
+  fi
+done
+
+mkdir -p "$STATE" "$BIN" "$CFG" "$HOME/ROMs" "$HOME/Downloads/rom"
+
+# 3) Instala a base/runtime apenas em instalação limpa.
 if [[ "$HAS_BASE" -eq 0 ]]; then
   say "Instalando runtime base"
-  SEED="$(resolve_runtime || true)"
-  [[ -n "$SEED" ]] || die "Instalação limpa precisa do runtime seed. Use: bash install.sh ~/jottabox-live-runtime.tar.gz"
-
   mkdir -p "$TMP/seed"
 
   if [[ -d "$SEED" ]]; then
@@ -87,13 +96,18 @@ if [[ "$HAS_BASE" -eq 0 ]]; then
     OLD_HOME="$(cat "$TMP/seed/source-home.txt" 2>/dev/null || true)"
   fi
 
-  # Corrige caminhos absolutos exportados de outro usuário/máquina.
   if [[ -n "${OLD_HOME:-}" && "$OLD_HOME" != "$HOME" ]]; then
     say "Adaptando runtime de $OLD_HOME para $HOME"
     while IFS= read -r -d '' f; do
       file "$f" 2>/dev/null | grep -qiE 'text|script|json|xml|python|shell' || continue
       sed -i "s#${OLD_HOME//\#/\\#}#${HOME//\#/\\#}#g" "$f" 2>/dev/null || true
-    done < <(find       "$HOME/.local/bin"       "$HOME/.local/share/jottabox"       "$HOME/.config/jottabox-console"       "$HOME/.emulationstation"       "$HOME/ES-DE"       -type f -print0 2>/dev/null)
+    done < <(find \
+      "$HOME/.local/bin" \
+      "$HOME/.local/share/jottabox" \
+      "$HOME/.config/jottabox-console" \
+      "$HOME/.emulationstation" \
+      "$HOME/ES-DE" \
+      -type f -print0 2>/dev/null)
   fi
 fi
 
