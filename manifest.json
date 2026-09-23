@@ -1,14 +1,15 @@
 {
   "name": "JottaBox",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "channel": "stable",
-  "update_script": "releases/0.10.0/update.sh",
+  "update_script": "releases/0.10.1/update.sh",
   "minimum_version": "legacy",
   "notes": [
-    "Atualizações oficiais pelo GitHub",
-    "Bootstrap compatível com instalação antiga",
-    "Teclado físico configurável como controle",
-    "Mapeamento do teclado aplicado ao JottaBox e RetroArch",
-    "Backup automático antes da migração"
+    "Configuração de controle unificada",
+    "Teclado físico aparece como dispositivo dentro de Configurar Controle",
+    "Perfil separado por GUID para cada gamepad",
+    "Perfil keyboard.json separado para teclado",
+    "RetroArch recebe autoconfig individual por controle",
+    "Item separado Configurar Teclado removido"
   ]
 }
