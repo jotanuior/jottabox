@@ -1,13 +1,15 @@
 {
   "name": "JottaBox",
-  "version": "0.10.17",
+  "version": "0.11.0",
   "channel": "stable",
-  "update_script": "releases/0.10.17/update.sh",
+  "update_script": "releases/0.11.0/update.sh",
   "minimum_version": "legacy",
   "notes": [
-    "Importar Jogos ganha tela gráfica de progresso em tempo real",
-    "Mostra a ação atual e as últimas operações sem abrir terminal",
-    "Mantém o JottaBox em tela cheia durante toda a importação",
-    "ISOs continuam usando movimentação rápida quando possível"
+    "Nova base autocontida para instalação limpa sem runtime Live",
+    "Launcher, engine e wrappers agora são recriados diretamente do GitHub",
+    "Downloader abre links salvos diretamente e volta a navegar nas pastas",
+    "Flatpaks são instalados corretamente no escopo system com sudo",
+    "ES-DE é baixado e validado automaticamente",
+    "Instalação não depende mais de arquivos antigos do PC"
   ]
 }
