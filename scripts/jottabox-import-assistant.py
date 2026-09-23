@@ -25,6 +25,21 @@ def log(msg):
         f.write(msg+"\n")
     print(msg)
 
+def fast_move(src,dst):
+    """Move sem copiar quando origem/destino estão no mesmo filesystem."""
+    src=Path(src); dst=Path(dst)
+    dst.parent.mkdir(parents=True,exist_ok=True)
+    try:
+        # rename/replace no mesmo filesystem: praticamente instantâneo.
+        os.replace(src,dst)
+        return "rename"
+    except OSError as e:
+        # EXDEV = filesystems diferentes. shutil.move faz copy+remove com segurança.
+        if getattr(e,"errno",None)==18:
+            shutil.move(str(src),str(dst))
+            return "copy+remove"
+        raise
+
 def unique_target(dst):
     if not dst.exists():
         return dst
@@ -64,7 +79,7 @@ def quarantine_fake_iso_dirs():
         if p.is_dir() and p.name.lower().endswith(".iso"):
             dst=unique_target(QUAR/(p.name+".dir"))
             try:
-                shutil.move(str(p),str(dst))
+                fast_move(p,dst)
                 log(f"[QUARENTENA] pasta com nome .iso: {p} -> {dst}")
             except Exception as e:
                 log(f"[ERRO] quarentena {p}: {e}")
@@ -178,8 +193,8 @@ def main():
             dest_dir=ROMS/system
             dest_dir.mkdir(parents=True,exist_ok=True)
             dest=unique_target(dest_dir/iso.name)
-            shutil.move(str(iso),str(dest))
-            log(f"[ISO] {iso.name} -> {system} -> {dest}")
+            mode=fast_move(iso,dest)
+            log(f"[ISO] {iso.name} -> {system} -> {dest} [{mode}]")
     finally:
         pygame.quit()
 
