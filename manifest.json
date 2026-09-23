@@ -1,15 +1,13 @@
 {
   "name": "JottaBox",
-  "version": "0.10.6",
+  "version": "0.10.7",
   "channel": "stable",
-  "update_script": "releases/0.10.6/update.sh",
+  "update_script": "releases/0.10.7/update.sh",
   "minimum_version": "legacy",
   "notes": [
-    "Todo arquivo ISO pergunta qual é o console antes de importar",
-    "PSP pode ser sugerido automaticamente pelo conteúdo, mas ainda exige confirmação",
-    "Opções: PSP, PS2, PS1, GameCube, Wii, Dreamcast, Saturn e Outro/revisar",
-    "ISO é movido diretamente para a pasta correta em ~/ROMs",
-    "Pastas antigas com nome .iso são movidas para quarentena",
-    "Demais formatos continuam usando o importador estável existente"
+    "PSP agora abre no PPSSPP standalone",
+    "Remove dependência do núcleo PPSSPP do RetroArch",
+    "ES-DE passa a usar flatpak run org.ppsspp.PPSSPP para .iso, .cso e .pbp",
+    "Configuração anterior do ES-DE é preservada com backup"
   ]
 }
