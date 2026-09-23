@@ -1,15 +1,15 @@
 {
   "name": "JottaBox",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "channel": "stable",
-  "update_script": "releases/0.10.1/update.sh",
+  "update_script": "releases/0.10.2/update.sh",
   "minimum_version": "legacy",
   "notes": [
-    "Configuração de controle unificada",
-    "Teclado físico aparece como dispositivo dentro de Configurar Controle",
-    "Perfil separado por GUID para cada gamepad",
-    "Perfil keyboard.json separado para teclado",
-    "RetroArch recebe autoconfig individual por controle",
-    "Item separado Configurar Teclado removido"
+    "Downloader com modo Baixar Pasta",
+    "Downloader com modo Baixar Arquivo",
+    "Links salvos com nome personalizado",
+    "Histórico local dos últimos downloads",
+    "Destino continua seguindo armazenamento interno ou HD externo",
+    "Backup automático do downloader anterior"
   ]
 }
