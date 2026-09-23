@@ -1,13 +1,13 @@
 {
   "name": "JottaBox",
-  "version": "0.10.16",
+  "version": "0.10.17",
   "channel": "stable",
-  "update_script": "releases/0.10.16/update.sh",
+  "update_script": "releases/0.10.17/update.sh",
   "minimum_version": "legacy",
   "notes": [
-    "Migração robusta para launchers antigos",
-    "Importar Jogos entra antes do terminal e do iconify legado",
-    "Downloader e Configurar Controle usam o mesmo fluxo nativo",
-    "Validação obrigatória antes de gravar a nova versão"
+    "Importar Jogos ganha tela gráfica de progresso em tempo real",
+    "Mostra a ação atual e as últimas operações sem abrir terminal",
+    "Mantém o JottaBox em tela cheia durante toda a importação",
+    "ISOs continuam usando movimentação rápida quando possível"
   ]
 }
