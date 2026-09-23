@@ -1,15 +1,13 @@
 {
   "name": "JottaBox",
-  "version": "0.10.2",
+  "version": "0.10.3",
   "channel": "stable",
-  "update_script": "releases/0.10.2/update.sh",
+  "update_script": "releases/0.10.3/update.sh",
   "minimum_version": "legacy",
   "notes": [
-    "Downloader com modo Baixar Pasta",
-    "Downloader com modo Baixar Arquivo",
-    "Links salvos com nome personalizado",
-    "Histórico local dos últimos downloads",
-    "Destino continua seguindo armazenamento interno ou HD externo",
-    "Backup automático do downloader anterior"
+    "JottaBox reinicia automaticamente após uma atualização",
+    "O reinício funciona também quando a atualização é executada pelo console embutido",
+    "Atualizador oficial é atualizado automaticamente",
+    "Backup do atualizador anterior antes da migração"
   ]
 }
