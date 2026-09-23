@@ -1,14 +1,16 @@
 {
   "name": "JottaBox",
-  "version": "0.10.4",
+  "version": "0.10.5",
   "channel": "stable",
-  "update_script": "releases/0.10.4/update.sh",
+  "update_script": "releases/0.10.5/update.sh",
   "minimum_version": "legacy",
   "notes": [
-    "Corrige ISO, ZIP, 7Z, CHD, RVZ e outros arquivos sendo tratados como pastas",
-    "Evita navegar dentro de imagens de disco expostas pelo servidor",
-    "Baixa o arquivo original diretamente",
-    "Padroniza o log para ~/jottabox-download.log",
-    "Migra automaticamente o log antigo ~/jotabox-download.log"
+    "Downloader unificado em Navegar / Baixar",
+    "Permite entrar e voltar entre pastas HTTP",
+    "Permite marcar arquivos dentro da pasta atual e baixar",
+    "URL direta de arquivo continua funcionando no mesmo navegador",
+    "Corrige salvamento de links e permite salvar a URL atual durante a navegação",
+    "Links salvos abrem diretamente no navegador",
+    "Histórico continua disponível"
   ]
 }
