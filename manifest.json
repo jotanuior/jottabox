@@ -1,15 +1,15 @@
 {
   "name": "JottaBox",
-  "version": "0.10.11",
+  "version": "0.10.12",
   "channel": "stable",
-  "update_script": "releases/0.10.11/update.sh",
+  "update_script": "releases/0.10.12/update.sh",
   "minimum_version": "legacy",
   "notes": [
-    "Atualização cumulativa: não depende de versões intermediárias",
-    "Configurar Controle e Downloader deixam de minimizar o JottaBox e expor o terminal",
-    "Mantém a tela fullscreen do JottaBox atrás das interfaces gráficas",
-    "Cria ~/ES-DE/custom_systems/es_systems.xml para PSP",
-    "PSP passa a usar ~/.local/bin/jottabox-launch-psp",
-    "PSP abre no Flatpak org.ppsspp.PPSSPP em vez do ppsspp_libretro.so"
+    "Fullscreen passa a ser política padrão do JottaBox",
+    "PPSSPP abre com --fullscreen",
+    "RetroArch força video_fullscreen=true",
+    "Dolphin é configurado para fullscreen",
+    "PCSX2 é configurado para iniciar em fullscreen",
+    "Wrappers de emuladores reaplicam a política antes de abrir o jogo"
   ]
 }
