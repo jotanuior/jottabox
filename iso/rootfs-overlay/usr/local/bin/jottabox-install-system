@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+# Mint atual/LMDE
+if [[ -x /usr/bin/live-installer ]]; then
+  exec pkexec /usr/bin/live-installer
+fi
+
+# Mint 22.x e bases Ubuntu que ainda usam Ubiquity.
+if command -v ubiquity >/dev/null 2>&1; then
+  exec pkexec ubiquity
+fi
+
+if command -v zenity >/dev/null 2>&1; then
+  zenity --error --title="Instalar JottaBox" --text="Instalador do sistema não encontrado nesta ISO base."
+fi
+exit 1
