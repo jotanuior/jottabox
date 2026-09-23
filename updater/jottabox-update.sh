@@ -9,41 +9,38 @@ trap 'rm -rf "$TMP"' EXIT
 
 mkdir -p "$STATE_DIR" "$BIN_DIR"
 
+fresh_url() {
+  printf '%s/%s?cb=%s' "$RAW" "$1" "$(date +%s%N)"
+}
+get_fresh() {
+  curl -fsSL     -H 'Cache-Control: no-cache, no-store, max-age=0'     -H 'Pragma: no-cache'     "$(fresh_url "$1")" -o "$2"
+}
+
 restart_jottabox() {
   local launcher="$BIN_DIR/jottabox-console"
   [[ -x "$launcher" ]] || return 0
-
-  # O atualizador pode estar rodando dentro do próprio launcher.
-  # Agenda o restart em uma nova sessão para sobreviver ao fechamento
-  # do JottaBox atual.
   setsid -f bash -lc "
     sleep 1.5
     pkill -f '[j]ottabox-console' 2>/dev/null || true
     sleep 1
     exec '$launcher'
-  " >"$HOME/.local/share/jottabox/restart.log" 2>&1 || true
+  " >"$STATE_DIR/restart.log" 2>&1 || true
 }
 
-curl -fsSL "$RAW/manifest.json" -o "$TMP/manifest.json"
+get_fresh "manifest.json" "$TMP/manifest.json"
 
 REMOTE="$(python3 - "$TMP/manifest.json" <<'PY'
 import json,sys
-m=json.load(open(sys.argv[1],encoding="utf-8"))
-print(m["version"])
+print(json.load(open(sys.argv[1],encoding="utf-8"))["version"])
 PY
 )"
-
 SCRIPT="$(python3 - "$TMP/manifest.json" <<'PY'
 import json,sys
-m=json.load(open(sys.argv[1],encoding="utf-8"))
-print(m["update_script"])
+print(json.load(open(sys.argv[1],encoding="utf-8"))["update_script"])
 PY
 )"
 
 LOCAL="$(cat "$STATE_DIR/VERSION" 2>/dev/null || true)"
-if [[ -z "$LOCAL" && -f "$STATE_DIR/jottabox.sh" ]]; then
-  LOCAL="$(grep -m1 '^VERSION=' "$STATE_DIR/jottabox.sh" 2>/dev/null | cut -d= -f2- | tr -d '"' || true)"
-fi
 [[ -n "$LOCAL" ]] || LOCAL="legado"
 
 echo "Instalada:   $LOCAL"
@@ -66,11 +63,18 @@ echo
 read -rp "Atualizar para $REMOTE? [s/N] " yn
 [[ "$yn" =~ ^[sSyY]$ ]] || exit 0
 
-curl -fsSL "$RAW/$SCRIPT" -o "$TMP/update.sh"
+get_fresh "$SCRIPT" "$TMP/update.sh"
 bash -n "$TMP/update.sh"
 chmod +x "$TMP/update.sh"
 
 "$TMP/update.sh"
+
+# A release só é considerada instalada se ela própria terminar sem erro.
+INSTALLED="$(cat "$STATE_DIR/VERSION" 2>/dev/null || true)"
+if [[ "$INSTALLED" != "$REMOTE" ]]; then
+  echo "ERRO: atualização executou, mas VERSION ficou em '$INSTALLED' em vez de '$REMOTE'."
+  exit 1
+fi
 
 echo
 echo "Atualização concluída. Reiniciando a interface do JottaBox..."
