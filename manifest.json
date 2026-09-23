@@ -1,0 +1,13 @@
+{
+  "name": "JottaBox",
+  "version": "0.9.9.8",
+  "channel": "stable",
+  "installer": "jottabox.sh",
+  "notes": [
+    "Terminal embutido no JottaBox",
+    "Configuração de controle dentro da interface",
+    "Suporte a armazenamento externo",
+    "Ferramentas dentro de Configurações"
+  ],
+  "minimum_version": "0.9.9.8"
+}
