@@ -1,14 +1,13 @@
 {
   "name": "JottaBox",
-  "version": "0.10.9",
+  "version": "0.10.10",
   "channel": "stable",
-  "update_script": "releases/0.10.9/update.sh",
+  "update_script": "releases/0.10.10/update.sh",
   "minimum_version": "legacy",
   "notes": [
-    "Corrige PSP em versões novas e antigas do ES-DE",
-    "Configura ~/ES-DE/custom_systems além dos caminhos legados",
-    "PSP passa a chamar ~/.local/bin/jottabox-launch-psp",
-    "jottabox-launch-psp abre o PPSSPP Flatpak diretamente",
-    "Evita dependência do ppsspp_libretro.so"
+    "Configurar Controle passa a abrir como tela gráfica interna do JottaBox",
+    "Remove o terminal visível ao entrar no configurador",
+    "Downloader também é classificado como tela gráfica interna",
+    "Ao sair da tela gráfica, o JottaBox volta automaticamente ao modo fullscreen"
   ]
 }
