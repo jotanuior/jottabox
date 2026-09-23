@@ -109,6 +109,14 @@ def get_html(url):
     req=urllib.request.Request(url,headers={"User-Agent":"JottaBox/1.0"})
     with urllib.request.urlopen(req,timeout=30) as r: return r.read().decode("utf-8","ignore")
 
+def parent_url(url):
+    p=urllib.parse.urlparse(url)
+    path=p.path.rstrip("/")
+    if not path or path=="/": return None
+    parent=path.rsplit("/",1)[0] or "/"
+    if not parent.endswith("/"): parent+="/"
+    return urllib.parse.urlunparse((p.scheme,p.netloc,parent,"","",""))
+
 def fetch_entries(root):
     data=get_html(root); hrefs=re.findall(r'href=["\']([^"\']+)["\']',data,re.I); rp=urllib.parse.urlparse(root)
     result=[]; seen=set()
@@ -242,106 +250,176 @@ def save_source(url,kind):
     if not name: return False
     data=sources(); data=[x for x in data if x.get("url")!=url]; data.insert(0,{"name":name.strip(),"url":url,"type":kind}); save_json(SOURCES,data[:100]); return True
 
-def folder_mode(initial=""):
-    root=initial; message=""; entries=[]; selected=set(); cursor=0; scroll=0; stage="url"
+def browser_mode(initial=""):
+    current=initial.strip()
+    message=""
+    entries=[]
+    selected=set()
+    cursor=0
+    scroll=0
+    stage="url"
+
+    def open_current():
+        nonlocal current,entries,cursor,scroll,message,stage,selected
+        p=urllib.parse.urlparse(current.strip())
+        if p.scheme not in ("http","https") or not p.netloc:
+            message="Erro: URL inválida"; return
+        # If user pasted a direct file URL, download that one file.
+        clean_name=urllib.parse.unquote(os.path.basename(p.path.rstrip("/")))
+        if looks_like_file_name(clean_name):
+            try:
+                file_url,name=normalize_file(current)
+                rc,dest=download_one(file_url,None,True)
+                message=("Concluído: " if rc in (0,8) else "Falha: ")+os.path.basename(dest)
+            except Exception as ex:
+                message="Erro: "+str(ex)
+            return
+        current=normalize_folder(current)
+        progress_screen("Lendo lista...")
+        entries=fetch_entries(current)
+        cursor=scroll=0
+        selected.clear()
+        message=f"{len(entries)} item(ns)"
+        stage="browse"
+
+    def enter_dir(url):
+        nonlocal current,entries,cursor,scroll,message,stage,selected
+        current=normalize_folder(url)
+        progress_screen("Lendo pasta...")
+        entries=fetch_entries(current)
+        cursor=scroll=0
+        selected.clear()
+        message=f"{len(entries)} item(ns)"
+        stage="browse"
+
     while True:
         draw_bg()
         if stage=="url":
-            header("BAIXAR PASTA","Navegue e marque pastas ou arquivos"); r=pygame.Rect(int(W*.08),int(H*.37),int(W*.84),int(H*.10)); alpha_rect(r,PANEL)
-            screen.blit(txt(root or "Informe a URL da pasta...",F_BODY),(r.x+20,r.y+25))
+            header("NAVEGAR / BAIXAR","Cole uma URL raiz, de pasta ou de arquivo")
+            r=pygame.Rect(int(W*.08),int(H*.37),int(W*.84),int(H*.10)); alpha_rect(r,PANEL)
+            screen.blit(txt(current or "Informe a URL...",F_BODY),(r.x+20,r.y+25))
             if message: screen.blit(txt(message,F_SMALL,AMBER),(r.x,r.bottom+24))
-            footer("A/ENTER editar URL    START/F10 abrir    Y/S salvar link    B/ESC voltar")
+            footer("A/ENTER editar    START/F10 abrir    Y/S salvar link    B/ESC voltar")
         else:
-            header("BAIXAR PASTA",message or "Selecione o que deseja baixar"); top=int(H*.245); rh=int(H*.072); shown=7
+            short=urllib.parse.unquote(urllib.parse.urlparse(current).path.rstrip("/") or "/")
+            header("NAVEGAR / BAIXAR",short)
+            top=int(H*.235); rh=int(H*.071); shown=8
             if entries:
                 if cursor<scroll: scroll=cursor
                 if cursor>=scroll+shown: scroll=cursor-shown+1
             for line,idx in enumerate(range(scroll,min(len(entries),scroll+shown))):
-                e=entries[idx]; r=pygame.Rect(int(W*.10),top+line*rh,int(W*.80),rh-8); alpha_rect(r,(8,29,57,235) if idx==cursor else (4,18,40,215))
+                e=entries[idx]
+                r=pygame.Rect(int(W*.08),top+line*rh,int(W*.84),rh-7)
+                alpha_rect(r,(8,29,57,235) if idx==cursor else (4,18,40,215))
                 if idx==cursor: pygame.draw.rect(screen,CYAN,r,3,border_radius=18)
-                mark="☑" if e["name"] in selected else "☐"; kind="PASTA" if e["kind"]=="dir" else "ARQUIVO"; screen.blit(txt(f'{mark}  {kind}  {e["name"]}',F_CARD),(r.x+18,r.y+13))
-            footer("A/ENTER marcar    X todos    Y limpar    START/F10 baixar    B/ESC voltar")
+                if e["kind"]=="dir":
+                    prefix="▸  PASTA"
+                else:
+                    prefix=("☑" if e["url"] in selected else "☐")+"  ARQUIVO"
+                label=f'{prefix}  {e["name"]}'
+                screen.blit(txt(label,F_CARD),(r.x+18,r.y+12))
+            if message:
+                m=txt(message,F_SMALL,AMBER); screen.blit(m,(int(W*.08),int(H*.84)))
+            footer("A abrir pasta/marcar arquivo • X marcar todos • Y salvar URL • START baixar • B voltar")
+
         pygame.display.flip()
+
         for ev in pygame.event.get():
             if ev.type==pygame.KEYDOWN:
                 if stage=="url":
                     if ev.key in (pygame.K_RETURN,pygame.K_SPACE):
-                        v=input_text("BAIXAR PASTA",root,"Digite ou cole a URL da pasta"); root=v if v is not None else root
+                        v=input_text("NAVEGAR / BAIXAR",current,"Digite ou cole uma URL")
+                        if v is not None: current=v
                     elif ev.key==pygame.K_F10:
-                        try: root=normalize_folder(root); progress_screen("Lendo lista..."); entries=fetch_entries(root); cursor=scroll=0; message=f"{len(entries)} item(ns)"; stage="browse"
-                        except Exception as e: message="Erro: "+str(e)
+                        try: open_current()
+                        except Exception as ex: message="Erro: "+str(ex)
                     elif ev.key==pygame.K_s:
-                        try: root=normalize_folder(root); message="Link salvo." if save_source(root,"folder") else "Cancelado."
-                        except Exception as e: message="Erro: "+str(e)
-                    elif ev.key==pygame.K_ESCAPE: return
+                        try:
+                            p=urllib.parse.urlparse(current.strip())
+                            kind="file" if looks_like_file_name(os.path.basename(p.path.rstrip("/"))) else "folder"
+                            normalized=normalize_file(current)[0] if kind=="file" else normalize_folder(current)
+                            message="Link salvo." if save_source(normalized,kind) else "Cancelado."
+                        except Exception as ex: message="Erro: "+str(ex)
+                    elif ev.key==pygame.K_ESCAPE:
+                        return
                 else:
-                    if ev.key==pygame.K_ESCAPE: stage="url"
-                    elif ev.key==pygame.K_UP and entries: cursor=(cursor-1)%len(entries)
-                    elif ev.key==pygame.K_DOWN and entries: cursor=(cursor+1)%len(entries)
+                    if ev.key==pygame.K_ESCAPE:
+                        parent=parent_url(current)
+                        if parent:
+                            try: enter_dir(parent)
+                            except Exception as ex: message="Erro: "+str(ex)
+                        else:
+                            stage="url"
+                    elif ev.key==pygame.K_UP and entries:
+                        cursor=(cursor-1)%len(entries)
+                    elif ev.key==pygame.K_DOWN and entries:
+                        cursor=(cursor+1)%len(entries)
                     elif ev.key in (pygame.K_RETURN,pygame.K_SPACE) and entries:
-                        n=entries[cursor]["name"]; selected.remove(n) if n in selected else selected.add(n)
-                    elif ev.key==pygame.K_x: selected={e["name"] for e in entries}
-                    elif ev.key==pygame.K_y: selected.clear()
+                        e=entries[cursor]
+                        if e["kind"]=="dir":
+                            try: enter_dir(e["url"])
+                            except Exception as ex: message="Erro: "+str(ex)
+                        else:
+                            if e["url"] in selected: selected.remove(e["url"])
+                            else: selected.add(e["url"])
+                    elif ev.key==pygame.K_x:
+                        selected={e["url"] for e in entries if e["kind"]=="file"}
+                    elif ev.key==pygame.K_y:
+                        message="Link salvo." if save_source(current,"folder") else "Cancelado."
                     elif ev.key==pygame.K_F10:
-                        chosen=[e for e in entries if e["name"] in selected]
+                        chosen=[e for e in entries if e["kind"]=="file" and e["url"] in selected]
                         if chosen:
-                            ok,msg=run_folder_download(root,chosen); message=("Concluído. " if ok else "Falha. ")+msg
-                        else: message="Marque pelo menos um item."
-            elif ev.type==pygame.JOYBUTTONDOWN:
-                if stage=="url":
-                    if ev.button==0:
-                        v=input_text("BAIXAR PASTA",root,"Digite ou cole a URL da pasta"); root=v if v is not None else root
-                    elif ev.button in (7,9):
-                        try: root=normalize_folder(root); progress_screen("Lendo lista..."); entries=fetch_entries(root); cursor=scroll=0; message=f"{len(entries)} item(ns)"; stage="browse"
-                        except Exception as e: message="Erro: "+str(e)
-                    elif ev.button==3:
-                        try: root=normalize_folder(root); message="Link salvo." if save_source(root,"folder") else "Cancelado."
-                        except Exception as e: message="Erro: "+str(e)
-                    elif ev.button==1: return
-                else:
-                    if ev.button==1: stage="url"
-                    elif ev.button==0 and entries:
-                        n=entries[cursor]["name"]; selected.remove(n) if n in selected else selected.add(n)
-                    elif ev.button==2: selected={e["name"] for e in entries}
-                    elif ev.button==3: selected.clear()
-                    elif ev.button in (7,9):
-                        chosen=[e for e in entries if e["name"] in selected]
-                        if chosen:
-                            ok,msg=run_folder_download(root,chosen); message=("Concluído. " if ok else "Falha. ")+msg
+                            ok,msg=run_folder_download(current,chosen)
+                            message=("Concluído. " if ok else "Falha. ")+msg
+                        else:
+                            message="Marque pelo menos um arquivo."
             elif ev.type==pygame.JOYHATMOTION and stage=="browse" and entries:
                 if ev.value[1]>0: cursor=(cursor-1)%len(entries)
                 elif ev.value[1]<0: cursor=(cursor+1)%len(entries)
-        clock.tick(60)
-
-def file_mode(initial=""):
-    url=initial; message=""
-    while True:
-        draw_bg(); header("BAIXAR ARQUIVO","Baixe somente um arquivo para a pasta de downloads"); r=pygame.Rect(int(W*.08),int(H*.37),int(W*.84),int(H*.10)); alpha_rect(r,PANEL)
-        screen.blit(txt(url or "Informe a URL direta do arquivo...",F_BODY),(r.x+20,r.y+25))
-        if message: screen.blit(txt(message,F_SMALL,AMBER),(r.x,r.bottom+24))
-        footer("A/ENTER editar URL    START/F10 baixar    Y/S salvar link    B/ESC voltar"); pygame.display.flip()
-        for e in pygame.event.get():
-            if e.type==pygame.KEYDOWN:
-                if e.key in (pygame.K_RETURN,pygame.K_SPACE):
-                    v=input_text("BAIXAR ARQUIVO",url,"Digite ou cole a URL direta"); url=v if v is not None else url
-                elif e.key==pygame.K_F10:
-                    try:
-                        url,name=normalize_file(url); rc,dest=download_one(url,None,True); message=("Concluído: " if rc in (0,8) else "Falha: ")+os.path.basename(dest)
-                    except Exception as ex: message="Erro: "+str(ex)
-                elif e.key==pygame.K_s:
-                    try: url,_=normalize_file(url); message="Link salvo." if save_source(url,"file") else "Cancelado."
-                    except Exception as ex: message="Erro: "+str(ex)
-                elif e.key==pygame.K_ESCAPE: return
-            elif e.type==pygame.JOYBUTTONDOWN:
-                if e.button==0:
-                    v=input_text("BAIXAR ARQUIVO",url,"Digite ou cole a URL direta"); url=v if v is not None else url
-                elif e.button in (7,9):
-                    try: url,name=normalize_file(url); rc,dest=download_one(url,None,True); message=("Concluído: " if rc in (0,8) else "Falha: ")+os.path.basename(dest)
-                    except Exception as ex: message="Erro: "+str(ex)
-                elif e.button==3:
-                    try: url,_=normalize_file(url); message="Link salvo." if save_source(url,"file") else "Cancelado."
-                    except Exception as ex: message="Erro: "+str(ex)
-                elif e.button==1: return
+            elif ev.type==pygame.JOYBUTTONDOWN:
+                if stage=="url":
+                    if ev.button==0:
+                        v=input_text("NAVEGAR / BAIXAR",current,"Digite ou cole uma URL")
+                        if v is not None: current=v
+                    elif ev.button in (7,9):
+                        try: open_current()
+                        except Exception as ex: message="Erro: "+str(ex)
+                    elif ev.button==3:
+                        try:
+                            p=urllib.parse.urlparse(current.strip())
+                            kind="file" if looks_like_file_name(os.path.basename(p.path.rstrip("/"))) else "folder"
+                            normalized=normalize_file(current)[0] if kind=="file" else normalize_folder(current)
+                            message="Link salvo." if save_source(normalized,kind) else "Cancelado."
+                        except Exception as ex: message="Erro: "+str(ex)
+                    elif ev.button==1:
+                        return
+                else:
+                    if ev.button==1:
+                        parent=parent_url(current)
+                        if parent:
+                            try: enter_dir(parent)
+                            except Exception as ex: message="Erro: "+str(ex)
+                        else:
+                            stage="url"
+                    elif ev.button==0 and entries:
+                        e=entries[cursor]
+                        if e["kind"]=="dir":
+                            try: enter_dir(e["url"])
+                            except Exception as ex: message="Erro: "+str(ex)
+                        else:
+                            if e["url"] in selected: selected.remove(e["url"])
+                            else: selected.add(e["url"])
+                    elif ev.button==2:
+                        selected={e["url"] for e in entries if e["kind"]=="file"}
+                    elif ev.button==3:
+                        message="Link salvo." if save_source(current,"folder") else "Cancelado."
+                    elif ev.button in (7,9):
+                        chosen=[e for e in entries if e["kind"]=="file" and e["url"] in selected]
+                        if chosen:
+                            ok,msg=run_folder_download(current,chosen)
+                            message=("Concluído. " if ok else "Falha. ")+msg
+                        else:
+                            message="Marque pelo menos um arquivo."
         clock.tick(60)
 
 def saved_mode():
@@ -357,8 +435,7 @@ def saved_mode():
         idx=choose_list("LINKS SALVOS",data,lambda x:(x.get("name","Sem nome"),("PASTA" if x.get("type")=="folder" else "ARQUIVO")+" • "+x.get("url","")))
         if idx is None: return
         item=data[idx]
-        if item.get("type")=="folder": folder_mode(item.get("url",""))
-        else: file_mode(item.get("url",""))
+        browser_mode(item.get("url",""))
 
 def history_mode():
     while True:
@@ -372,9 +449,9 @@ def history_mode():
                 clock.tick(60)
         idx=choose_list("HISTÓRICO",data,lambda x:(x.get("name","Arquivo"),time.strftime("%d/%m/%Y %H:%M",time.localtime(x.get("timestamp",0)))+" • "+x.get("status","")))
         if idx is None: return
-        file_mode(data[idx].get("url",""))
+        browser_mode(data[idx].get("url",""))
 
-MENU=[("BAIXAR PASTA","Navegar uma fonte e baixar vários itens"),("BAIXAR ARQUIVO","Baixar somente um arquivo"),("LINKS SALVOS","Abrir fontes e arquivos favoritos"),("HISTÓRICO","Reabrir downloads recentes"),("VOLTAR","Retornar ao JottaBox")]
+MENU=[("NAVEGAR / BAIXAR","Entrar em pastas, marcar arquivos e baixar"),("LINKS SALVOS","Abrir fontes e arquivos favoritos"),("HISTÓRICO","Reabrir downloads recentes"),("VOLTAR","Retornar ao JottaBox")]
 selected=0; running=True
 while running:
     draw_bg(); header("DOWNLOADS","Escolha como deseja baixar"); left=int(W*.18); width=int(W*.68); top=int(H*.24); rh=int(H*.105); gap=int(H*.017)
@@ -389,10 +466,9 @@ while running:
             elif e.key==pygame.K_UP: selected=(selected-1)%len(MENU)
             elif e.key==pygame.K_DOWN: selected=(selected+1)%len(MENU)
             elif e.key==pygame.K_RETURN:
-                if selected==0: folder_mode()
-                elif selected==1: file_mode()
-                elif selected==2: saved_mode()
-                elif selected==3: history_mode()
+                if selected==0: browser_mode()
+                elif selected==1: saved_mode()
+                elif selected==2: history_mode()
                 else: running=False
         elif e.type==pygame.JOYHATMOTION:
             if e.value[1]>0: selected=(selected-1)%len(MENU)
@@ -400,10 +476,9 @@ while running:
         elif e.type==pygame.JOYBUTTONDOWN:
             if e.button==1: running=False
             elif e.button==0:
-                if selected==0: folder_mode()
-                elif selected==1: file_mode()
-                elif selected==2: saved_mode()
-                elif selected==3: history_mode()
+                if selected==0: browser_mode()
+                elif selected==1: saved_mode()
+                elif selected==2: history_mode()
                 else: running=False
     clock.tick(60)
 pygame.quit()
