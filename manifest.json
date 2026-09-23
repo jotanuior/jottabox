@@ -1,16 +1,15 @@
 {
   "name": "JottaBox",
-  "version": "0.10.5",
+  "version": "0.10.6",
   "channel": "stable",
-  "update_script": "releases/0.10.5/update.sh",
+  "update_script": "releases/0.10.6/update.sh",
   "minimum_version": "legacy",
   "notes": [
-    "Downloader unificado em Navegar / Baixar",
-    "Permite entrar e voltar entre pastas HTTP",
-    "Permite marcar arquivos dentro da pasta atual e baixar",
-    "URL direta de arquivo continua funcionando no mesmo navegador",
-    "Corrige salvamento de links e permite salvar a URL atual durante a navegação",
-    "Links salvos abrem diretamente no navegador",
-    "Histórico continua disponível"
+    "Todo arquivo ISO pergunta qual é o console antes de importar",
+    "PSP pode ser sugerido automaticamente pelo conteúdo, mas ainda exige confirmação",
+    "Opções: PSP, PS2, PS1, GameCube, Wii, Dreamcast, Saturn e Outro/revisar",
+    "ISO é movido diretamente para a pasta correta em ~/ROMs",
+    "Pastas antigas com nome .iso são movidas para quarentena",
+    "Demais formatos continuam usando o importador estável existente"
   ]
 }
