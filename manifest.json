@@ -1,14 +1,13 @@
 {
   "name": "JottaBox",
-  "version": "0.10.15",
+  "version": "0.10.16",
   "channel": "stable",
-  "update_script": "releases/0.10.15/update.sh",
+  "update_script": "releases/0.10.16/update.sh",
   "minimum_version": "legacy",
   "notes": [
-    "Migra corretamente launchers antigos que estavam apenas com VERSION novo",
-    "Importar Jogos deixa de usar terminal externo no launcher legado",
-    "Importar Jogos, Downloader e Configurar Controle entram antes do iconify genérico",
-    "Updater passa a ignorar cache do GitHub",
-    "VERSION só é gravada depois que a migração e as validações terminam"
+    "Migração robusta para launchers antigos",
+    "Importar Jogos entra antes do terminal e do iconify legado",
+    "Downloader e Configurar Controle usam o mesmo fluxo nativo",
+    "Validação obrigatória antes de gravar a nova versão"
   ]
 }
