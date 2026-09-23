@@ -1,13 +1,16 @@
 {
   "name": "JottaBox",
-  "version": "0.10.7",
+  "version": "0.10.8",
   "channel": "stable",
-  "update_script": "releases/0.10.7/update.sh",
+  "update_script": "releases/0.10.8/update.sh",
   "minimum_version": "legacy",
   "notes": [
-    "PSP agora abre no PPSSPP standalone",
-    "Remove dependência do núcleo PPSSPP do RetroArch",
-    "ES-DE passa a usar flatpak run org.ppsspp.PPSSPP para .iso, .cso e .pbp",
-    "Configuração anterior do ES-DE é preservada com backup"
+    "Padroniza ferramentas administrativas no console interno do JottaBox",
+    "Importar Jogos roda dentro do JottaBox",
+    "Organizar Biblioteca roda dentro do JottaBox",
+    "Atualizar JottaBox roda dentro do JottaBox",
+    "Status, Reparar Hotkey, Armazenamento e Diagnóstico rodam dentro do JottaBox",
+    "Downloader e Configurar Controle permanecem como telas gráficas",
+    "Adiciona auditoria contra terminais externos"
   ]
 }
