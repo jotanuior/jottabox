@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<systemList>
+  <system>
+    <name>psp</name>
+    <fullname>Sony PlayStation Portable</fullname>
+    <path>~/ROMs/psp</path>
+    <extension>.iso .ISO .cso .CSO .pbp .PBP</extension>
+    <command label="PPSSPP (JottaBox)">~/.local/bin/jottabox-launch-psp %ROM%</command>
+    <platform>psp</platform>
+    <theme>psp</theme>
+  </system>
+  <system>
+    <name>ps2</name>
+    <fullname>Sony PlayStation 2</fullname>
+    <path>~/ROMs/ps2</path>
+    <extension>.iso .ISO .chd .CHD .cso .CSO .gz .GZ</extension>
+    <command label="PCSX2 (JottaBox)">~/.local/bin/jottabox-launch-pcsx2 %ROM%</command>
+    <platform>ps2</platform>
+    <theme>ps2</theme>
+  </system>
+  <system>
+    <name>gc</name>
+    <fullname>Nintendo GameCube</fullname>
+    <path>~/ROMs/gc</path>
+    <extension>.iso .ISO .gcm .GCM .gcz .GCZ .rvz .RVZ</extension>
+    <command label="Dolphin (JottaBox)">~/.local/bin/jottabox-launch-dolphin %ROM%</command>
+    <platform>gc</platform>
+    <theme>gc</theme>
+  </system>
+  <system>
+    <name>wii</name>
+    <fullname>Nintendo Wii</fullname>
+    <path>~/ROMs/wii</path>
+    <extension>.iso .ISO .wbfs .WBFS .rvz .RVZ .gcz .GCZ</extension>
+    <command label="Dolphin (JottaBox)">~/.local/bin/jottabox-launch-dolphin %ROM%</command>
+    <platform>wii</platform>
+    <theme>wii</theme>
+  </system>
+</systemList>
