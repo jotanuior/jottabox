@@ -1,13 +1,14 @@
 {
   "name": "JottaBox",
-  "version": "0.10.13",
+  "version": "0.10.14",
   "channel": "stable",
-  "update_script": "releases/0.10.13/update.sh",
+  "update_script": "releases/0.10.14/update.sh",
   "minimum_version": "legacy",
   "notes": [
-    "Importar Jogos passa a ser fluxo gráfico nativo e não revela terminal",
-    "Mantém o JottaBox fullscreen durante a importação",
-    "ISOs usam rename/mv instantâneo quando origem e destino estão no mesmo filesystem",
-    "Entre discos diferentes, usa copy+remove automaticamente"
+    "Correção cumulativa para instalações que pularam versões intermediárias",
+    "Importar Jogos não minimiza mais o JottaBox",
+    "Downloader não minimiza mais o JottaBox",
+    "Configurar Controle não minimiza mais o JottaBox",
+    "Terminal e desktop não devem mais aparecer por trás dessas telas"
   ]
 }
