@@ -1,15 +1,13 @@
 {
   "name": "JottaBox",
-  "version": "0.10.12",
+  "version": "0.10.13",
   "channel": "stable",
-  "update_script": "releases/0.10.12/update.sh",
+  "update_script": "releases/0.10.13/update.sh",
   "minimum_version": "legacy",
   "notes": [
-    "Fullscreen passa a ser política padrão do JottaBox",
-    "PPSSPP abre com --fullscreen",
-    "RetroArch força video_fullscreen=true",
-    "Dolphin é configurado para fullscreen",
-    "PCSX2 é configurado para iniciar em fullscreen",
-    "Wrappers de emuladores reaplicam a política antes de abrir o jogo"
+    "Importar Jogos passa a ser fluxo gráfico nativo e não revela terminal",
+    "Mantém o JottaBox fullscreen durante a importação",
+    "ISOs usam rename/mv instantâneo quando origem e destino estão no mesmo filesystem",
+    "Entre discos diferentes, usa copy+remove automaticamente"
   ]
 }
