@@ -1,15 +1,12 @@
 {
   "name": "JottaBox",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "channel": "stable",
-  "update_script": "releases/0.11.0/update.sh",
+  "update_script": "releases/0.11.1/update.sh",
   "minimum_version": "legacy",
   "notes": [
-    "Nova base autocontida para instalação limpa sem runtime Live",
-    "Launcher, engine e wrappers agora são recriados diretamente do GitHub",
-    "Downloader abre links salvos diretamente e volta a navegar nas pastas",
-    "Flatpaks são instalados corretamente no escopo system com sudo",
-    "ES-DE é baixado e validado automaticamente",
-    "Instalação não depende mais de arquivos antigos do PC"
+    "Suspende a substituição automática da base 0.11.0",
+    "Não altera launcher, ES-DE ou interface existente",
+    "Adiciona procedimento de recuperação usando snapshot de uma máquina validada"
   ]
 }
