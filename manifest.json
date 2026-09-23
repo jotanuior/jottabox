@@ -1,13 +1,14 @@
 {
   "name": "JottaBox",
-  "version": "0.9.9.8",
+  "version": "0.10.0",
   "channel": "stable",
-  "installer": "jottabox.sh",
+  "update_script": "releases/0.10.0/update.sh",
+  "minimum_version": "legacy",
   "notes": [
-    "Terminal embutido no JottaBox",
-    "Configuração de controle dentro da interface",
-    "Suporte a armazenamento externo",
-    "Ferramentas dentro de Configurações"
-  ],
-  "minimum_version": "0.9.9.8"
+    "Atualizações oficiais pelo GitHub",
+    "Bootstrap compatível com instalação antiga",
+    "Teclado físico configurável como controle",
+    "Mapeamento do teclado aplicado ao JottaBox e RetroArch",
+    "Backup automático antes da migração"
+  ]
 }
