@@ -186,7 +186,7 @@ def download_one(url,base_root=None,direct=False):
     cmd=["wget","--continue","--tries=3","--timeout=30","--read-timeout=30","--waitretry=5","-O",dest,url]
     with open(LOG,"a",encoding="utf-8") as log:
         log.write(f"\n===== ARQUIVO {url} =====\n"); p=subprocess.run(cmd,stdout=log,stderr=subprocess.STDOUT)
-    add_history(url,os.path.basename(dest),"ok" if p.returncode in (0,8) else "error")
+    add_history(url,os.path.basename(dest),"ok" if p.returncode == 0 else "error")
     return p.returncode,dest
 
 def run_folder_download(root,chosen):
@@ -200,7 +200,7 @@ def run_folder_download(root,chosen):
     for i,url in enumerate(allfiles,1):
         progress_screen("Baixando "+urllib.parse.unquote(url.rsplit("/",1)[-1]),i-1,len(allfiles))
         rc,_=download_one(url,root,False)
-        if rc not in (0,8): errors.append(url)
+        if rc != 0: errors.append(url)
     progress_screen("Downloads finalizados",len(allfiles),len(allfiles))
     return (not errors, f"{len(allfiles)-len(errors)}/{len(allfiles)} arquivo(s) concluído(s).")
 
@@ -270,7 +270,7 @@ def browser_mode(initial=""):
             try:
                 file_url,name=normalize_file(current)
                 rc,dest=download_one(file_url,None,True)
-                message=("Concluído: " if rc in (0,8) else "Falha: ")+os.path.basename(dest)
+                message=("Concluído: " if rc == 0 else "Falha: ")+os.path.basename(dest)
             except Exception as ex:
                 message="Erro: "+str(ex)
             return
