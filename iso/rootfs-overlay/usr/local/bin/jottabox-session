@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+export PATH="$HOME/.local/bin:$PATH"
+export XDG_CURRENT_DESKTOP=JottaBox
+export DESKTOP_SESSION=jottabox
+
+/usr/local/bin/jottabox-prepare-home || true
+
+# Desliga protetores/telas pretas na sessão console.
+command -v xset >/dev/null 2>&1 && {
+  xset s off || true
+  xset -dpms || true
+  xset s noblank || true
+}
+
+if [[ -x "$HOME/.local/bin/jottabox-console" ]]; then
+  exec "$HOME/.local/bin/jottabox-console"
+fi
+
+# Fallback visual em vez de cair num terminal.
+if command -v zenity >/dev/null 2>&1; then
+  zenity --error --title="JottaBox" --text="O launcher do JottaBox não foi encontrado."
+fi
+exit 1
