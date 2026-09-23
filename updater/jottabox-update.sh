@@ -3,10 +3,26 @@ set -Eeuo pipefail
 
 RAW="https://raw.githubusercontent.com/jotanuior/jottabox/main"
 STATE_DIR="$HOME/.local/share/jottabox"
+BIN_DIR="$HOME/.local/bin"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-mkdir -p "$STATE_DIR"
+mkdir -p "$STATE_DIR" "$BIN_DIR"
+
+restart_jottabox() {
+  local launcher="$BIN_DIR/jottabox-console"
+  [[ -x "$launcher" ]] || return 0
+
+  # O atualizador pode estar rodando dentro do próprio launcher.
+  # Agenda o restart em uma nova sessão para sobreviver ao fechamento
+  # do JottaBox atual.
+  setsid -f bash -lc "
+    sleep 1.5
+    pkill -f '[j]ottabox-console' 2>/dev/null || true
+    sleep 1
+    exec '$launcher'
+  " >"$HOME/.local/share/jottabox/restart.log" 2>&1 || true
+}
 
 curl -fsSL "$RAW/manifest.json" -o "$TMP/manifest.json"
 
@@ -53,4 +69,9 @@ read -rp "Atualizar para $REMOTE? [s/N] " yn
 curl -fsSL "$RAW/$SCRIPT" -o "$TMP/update.sh"
 bash -n "$TMP/update.sh"
 chmod +x "$TMP/update.sh"
+
 "$TMP/update.sh"
+
+echo
+echo "Atualização concluída. Reiniciando a interface do JottaBox..."
+restart_jottabox
