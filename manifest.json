@@ -1,13 +1,14 @@
 {
   "name": "JottaBox",
-  "version": "0.10.3",
+  "version": "0.10.4",
   "channel": "stable",
-  "update_script": "releases/0.10.3/update.sh",
+  "update_script": "releases/0.10.4/update.sh",
   "minimum_version": "legacy",
   "notes": [
-    "JottaBox reinicia automaticamente após uma atualização",
-    "O reinício funciona também quando a atualização é executada pelo console embutido",
-    "Atualizador oficial é atualizado automaticamente",
-    "Backup do atualizador anterior antes da migração"
+    "Corrige ISO, ZIP, 7Z, CHD, RVZ e outros arquivos sendo tratados como pastas",
+    "Evita navegar dentro de imagens de disco expostas pelo servidor",
+    "Baixa o arquivo original diretamente",
+    "Padroniza o log para ~/jottabox-download.log",
+    "Migra automaticamente o log antigo ~/jotabox-download.log"
   ]
 }
