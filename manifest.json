@@ -1,16 +1,14 @@
 {
   "name": "JottaBox",
-  "version": "0.10.8",
+  "version": "0.10.9",
   "channel": "stable",
-  "update_script": "releases/0.10.8/update.sh",
+  "update_script": "releases/0.10.9/update.sh",
   "minimum_version": "legacy",
   "notes": [
-    "Padroniza ferramentas administrativas no console interno do JottaBox",
-    "Importar Jogos roda dentro do JottaBox",
-    "Organizar Biblioteca roda dentro do JottaBox",
-    "Atualizar JottaBox roda dentro do JottaBox",
-    "Status, Reparar Hotkey, Armazenamento e Diagnóstico rodam dentro do JottaBox",
-    "Downloader e Configurar Controle permanecem como telas gráficas",
-    "Adiciona auditoria contra terminais externos"
+    "Corrige PSP em versões novas e antigas do ES-DE",
+    "Configura ~/ES-DE/custom_systems além dos caminhos legados",
+    "PSP passa a chamar ~/.local/bin/jottabox-launch-psp",
+    "jottabox-launch-psp abre o PPSSPP Flatpak diretamente",
+    "Evita dependência do ppsspp_libretro.so"
   ]
 }
