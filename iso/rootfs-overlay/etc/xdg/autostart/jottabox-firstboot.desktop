@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
-Name=JottaBox First Boot
-Comment=Prepara o JottaBox no primeiro login
-Exec=/usr/local/bin/jottabox-prepare-home
+Name=JottaBox
+Comment=Inicia o ambiente JottaBox
+Exec=/usr/local/bin/jottabox-autostart
 Terminal=false
 NoDisplay=true
 X-GNOME-Autostart-enabled=true

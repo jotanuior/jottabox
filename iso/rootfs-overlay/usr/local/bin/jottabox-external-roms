@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+command -v zenity >/dev/null 2>&1 || exit 1
+command -v udisksctl >/dev/null 2>&1 || exit 1
+
+TMP="$(mktemp)"
+trap 'rm -f "$TMP"' EXIT
+
+python3 - > "$TMP" <<'PY'
+import json
+import subprocess
+
+data = json.loads(subprocess.check_output([
+    "lsblk", "-J", "-o",
+    "PATH,TYPE,FSTYPE,LABEL,SIZE,MOUNTPOINTS"
+]))
+
+def walk(items):
+    for x in items:
+        if x.get("type") == "part" and x.get("fstype") not in (None, "", "swap", "squashfs"):
+            mounts = x.get("mountpoints") or []
+            mount = next((m for m in mounts if m), "")
+            print("|".join([
+                x.get("path") or "",
+                x.get("label") or "Sem nome",
+                x.get("fstype") or "",
+                x.get("size") or "",
+                mount
+            ]))
+        walk(x.get("children") or [])
+
+walk(data.get("blockdevices") or [])
+PY
+
+ARGS=()
+
+while IFS='|' read -r DEV LABEL FS SIZE MNT; do
+    [[ -n "$DEV" ]] || continue
+    ARGS+=(
+        "$DEV"
+        "$LABEL"
+        "$FS"
+        "$SIZE"
+        "${MNT:-Não montado}"
+    )
+done < "$TMP"
+
+[[ ${#ARGS[@]} -gt 0 ]] || {
+    zenity \
+        --info \
+        --title="JottaBox" \
+        --text="Nenhum disco disponível."
+    exit 0
+}
+
+DEV="$(
+    zenity \
+        --list \
+        --title="Fontes externas de ROM" \
+        --text="Escolha o disco que contém as ROMs" \
+        --width=900 \
+        --height=500 \
+        --column="Dispositivo" \
+        --column="Nome" \
+        --column="Sistema" \
+        --column="Tamanho" \
+        --column="Montagem" \
+        "${ARGS[@]}"
+)" || exit 0
+
+[[ -n "$DEV" ]] || exit 0
+
+MNT="$(
+    lsblk -nrpo MOUNTPOINTS "$DEV" |
+    awk 'NF { print; exit }'
+)"
+
+if [[ -z "$MNT" ]]; then
+    udisksctl mount \
+        -b "$DEV" \
+        -o ro \
+        >/dev/null
+
+    MNT="$(
+        lsblk -nrpo MOUNTPOINTS "$DEV" |
+        awk 'NF { print; exit }'
+    )"
+fi
+
+[[ -d "$MNT" ]] || {
+    zenity \
+        --error \
+        --title="JottaBox" \
+        --text="Não foi possível montar o disco."
+    exit 1
+}
+
+DIR="$(
+    zenity \
+        --file-selection \
+        --directory \
+        --title="Escolha a pasta que contém as ROMs" \
+        --filename="$MNT/"
+)" || exit 0
+
+[[ -d "$DIR" ]] || exit 0
+
+SAFE="$(
+    basename "$MNT" |
+    tr -cs '[:alnum:]_.-' '_'
+)"
+
+mkdir -p "$HOME/ROMs"
+
+COUNT=0
+
+for SRC in "$DIR"/*; do
+    [[ -d "$SRC" ]] || continue
+
+    SYSTEM="$(basename "$SRC")"
+    DEST="$HOME/ROMs/$SYSTEM"
+
+    mkdir -p "$DEST"
+
+    LINK="$DEST/External-$SAFE"
+
+    rm -f "$LINK"
+    ln -s "$SRC" "$LINK"
+
+    COUNT=$((COUNT + 1))
+done
+
+mkdir -p "$HOME/.config/jottabox-console"
+
+printf '%s\t%s\t%s\n' \
+    "$DEV" \
+    "$MNT" \
+    "$DIR" \
+    >> "$HOME/.config/jottabox-console/external-roms.tsv"
+
+zenity \
+    --info \
+    --title="JottaBox" \
+    --text="Fonte externa adicionada.
+
+Disco: $MNT
+Pasta: $DIR
+Sistemas encontrados: $COUNT
+
+O disco foi montado somente para leitura."

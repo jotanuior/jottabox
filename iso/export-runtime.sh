@@ -47,6 +47,36 @@ done
 # Nunca carregar conteúdo pessoal/jogos para a ISO.
 rm -rf   "$DST/ROMs"   "$DST/Downloads"   "$DST/.local/share/jottabox/backups"   "$DST/.local/share/jottabox/logs"   "$DST/.config/google-chrome"   "$DST/.config/microsoft-edge"   "$DST/.ssh" 2>/dev/null || true
 
+# Ajustes exclusivos da versão Live.
+LIVE_LAUNCHER="$DST/.config/jottabox-console/launcher.py"
+
+if [[ -f "$LIVE_LAUNCHER" ]]; then
+python3 - "$LIVE_LAUNCHER" <<'PYLIVE'
+from pathlib import Path
+import sys
+
+p = Path(sys.argv[1])
+s = p.read_text()
+
+s = s.replace(
+    '"organize":load_img("library_organize.png"),',
+    '"organize":load_img("library_organize.png"),\n "external":load_img("library_import.png"),'
+)
+
+s = s.replace(
+    '("organize",os.path.join(BIN,"jottabox-clean-roms")),\n ("back","__back__"),',
+    '("organize",os.path.join(BIN,"jottabox-clean-roms")),\n ("external","/usr/local/bin/jottabox-external-roms"),\n ("back","__back__"),'
+)
+
+s = s.replace(
+    '"back":("VOLTAR","Retornar à Home","←"),',
+    '"external":("FONTES EXTERNAS","Usar ROMs de HD/SSD sem copiar","▣"),\n "back":("VOLTAR","Retornar à Home","←"),'
+)
+
+p.write_text(s)
+PYLIVE
+fi
+
 printf '%s\n' "$SRC_HOME" > "$TMP/source-home.txt"
 printf '%s\n' "$(cat "$HOME/.local/share/jottabox/VERSION" 2>/dev/null || echo unknown)" > "$TMP/jottabox-version.txt"
 

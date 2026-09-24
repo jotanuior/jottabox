@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+sleep 2
+
+/usr/local/bin/jottabox-prepare-home || true
+
+# Evita abrir duas instâncias.
+if pgrep -u "$(id -u)" -f '/\.config/jottabox-console/launcher\.py' >/dev/null 2>&1; then
+    exit 0
+fi
+
+if [[ -x "$HOME/.local/bin/jottabox-console" ]]; then
+    exec "$HOME/.local/bin/jottabox-console"
+fi
+
+exit 1
