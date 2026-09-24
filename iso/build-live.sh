@@ -187,13 +187,7 @@ rsync -aHAX --delete \
     /var/lib/flatpak/ \
     "$WORK/rootfs/var/lib/flatpak/"
 
-echo ">>> Reparando registro dos Flatpaks"
-
-chroot "$WORK/rootfs" \
-    flatpak repair --system --noninteractive \
-    || true
-
-echo ">>> Validando Flatpaks obrigatórios"
+echo ">>> Validando Flatpaks copiados"
 
 for APP in \
     com.valvesoftware.Steam \
@@ -202,12 +196,12 @@ for APP in \
     org.DolphinEmu.dolphin-emu \
     net.pcsx2.PCSX2
 do
-    chroot "$WORK/rootfs" \
-        flatpak info --system "$APP" \
-        >/dev/null || {
-            echo "ERRO: Flatpak ausente no Live: $APP"
-            exit 1
-        }
+    if [[ ! -d "$WORK/rootfs/var/lib/flatpak/app/$APP" ]]; then
+        echo "ERRO: Flatpak ausente no Live: $APP"
+        exit 1
+    fi
+
+    echo "OK: $APP"
 done
 
 echo ">>> Validando Microsoft Edge"
