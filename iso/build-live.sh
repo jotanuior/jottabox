@@ -134,7 +134,8 @@ apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     udisks2 \
-    zenity
+    zenity \
+    steam-devices
 
 apt-get install -y /tmp/microsoft-edge-stable.deb
 

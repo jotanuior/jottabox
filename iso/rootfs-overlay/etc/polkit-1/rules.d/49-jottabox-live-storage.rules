@@ -1,0 +1,12 @@
+polkit.addRule(function(action, subject) {
+    if (
+        subject.user == "mint" &&
+        (
+            action.id == "org.freedesktop.udisks2.filesystem-mount-system" ||
+            action.id == "org.freedesktop.udisks2.filesystem-mount" ||
+            action.id == "org.freedesktop.udisks2.filesystem-unmount-others"
+        )
+    ) {
+        return polkit.Result.YES;
+    }
+});

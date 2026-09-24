@@ -73,8 +73,57 @@ s = s.replace(
     '"external":("FONTES EXTERNAS","Usar ROMs de HD/SSD sem copiar","▣"),\n "back":("VOLTAR","Retornar à Home","←"),'
 )
 
+# No Live, não bloquear o loop do Pygame enquanto Steam e outros apps ficam abertos.
+old_external = """        else:
+            subprocess.run(run,shell=True)
+
+    except Exception:
+        pass
+"""
+
+new_external = """        else:
+            proc = subprocess.Popen(run, shell=True)
+
+            while proc.poll() is None:
+                pygame.event.pump()
+                time.sleep(.15)
+
+    except Exception:
+        pass
+"""
+
+if old_external not in s:
+    raise SystemExit("ERRO: bloco externo do launcher não encontrado")
+
+s = s.replace(old_external, new_external, 1)
+
 p.write_text(s)
 PYLIVE
+
+XCLOUD="$DST/.local/bin/xbox-cloud"
+
+if [[ -f "$XCLOUD" ]]; then
+python3 - "$XCLOUD" <<'PYXCLOUD'
+from pathlib import Path
+import sys
+
+p = Path(sys.argv[1])
+s = p.read_text()
+
+s = s.replace(
+    '--start-fullscreen \\',
+    '--start-fullscreen \\\n  --kiosk \\'
+)
+
+s = s.replace(
+    '--app="[https://www.xbox.com/play](https://www.xbox.com/play)"',
+    '--app="https://www.xbox.com/play"'
+)
+
+p.write_text(s)
+PYXCLOUD
+fi
+
 fi
 
 printf '%s\n' "$SRC_HOME" > "$TMP/source-home.txt"
