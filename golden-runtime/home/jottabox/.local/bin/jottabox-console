@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+xset s off >/dev/null 2>&1 || true
+xset -dpms >/dev/null 2>&1 || true
+xset s noblank >/dev/null 2>&1 || true
+exec /usr/bin/python3 "/home/jottabox/.config/jottabox-console/launcher.py"

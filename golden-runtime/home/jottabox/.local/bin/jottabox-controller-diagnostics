@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+echo "=== JottaBox - diagnóstico de controles ==="
+echo
+echo "--- SDL/Pygame ---"
+python3 - <<'PY'
+import pygame
+pygame.init(); pygame.joystick.init()
+print("Controles detectados:", pygame.joystick.get_count())
+for i in range(pygame.joystick.get_count()):
+    j=pygame.joystick.Joystick(i); j.init()
+    print(f"[{i}] {j.get_name()}")
+    try: print(" GUID:", j.get_guid())
+    except: pass
+    print(" botões:",j.get_numbuttons(),"eixos:",j.get_numaxes(),"hats:",j.get_numhats())
+PY
+echo
+echo "--- Kernel/input ---"
+grep -A8 -B2 -Ei 'xbox|x-box|microsoft|wireless controller|sony|dualshock|dualsense' /proc/bus/input/devices 2>/dev/null || true
+echo
+echo "--- Módulos ---"
+lsmod | grep -Ei 'xpad|hid_sony|hid_playstation|hid_microsoft' || true
+echo
+echo "--- Bluetooth ---"
+bluetoothctl devices Connected 2>/dev/null || true

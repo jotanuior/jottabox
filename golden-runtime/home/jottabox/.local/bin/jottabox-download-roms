@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+"/home/jottabox/.local/share/jottabox/jottabox.sh" storage-check || exit 1
+exec /usr/bin/python3 "/home/jottabox/.config/jottabox-console/downloader_gui.py"

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+ROM="${1:?Informe o arquivo do jogo}"
+exec flatpak run org.ppsspp.PPSSPP "$ROM"

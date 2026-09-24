@@ -1,0 +1,14 @@
+[
+  {
+    "url": "https://archive.org/download/ultimate-rom-collection/PSP/Final%20Fantasy%20II%20-%2020th%20Anniversary%20Edition%20%28USA%2C%20Canada%29%20%28En%2CJa%29.iso",
+    "name": "Final Fantasy II - 20th Anniversary Edition (USA, Canada) (En,Ja).iso",
+    "status": "ok",
+    "timestamp": 1790175909
+  },
+  {
+    "url": "https://archive.org/download/ultimate-rom-collection/PSP/Final%20Fantasy%20-%2020th%20Anniversary%20Edition%20%28USA%29%20%28En%2CJa%29%20%28FW6.00%29.iso",
+    "name": "Final Fantasy - 20th Anniversary Edition (USA) (En,Ja) (FW6.00).iso",
+    "status": "error",
+    "timestamp": 1790175792
+  }
+]

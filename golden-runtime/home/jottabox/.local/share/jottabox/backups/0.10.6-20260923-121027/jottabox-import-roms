@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+exec "/home/jottabox/.local/share/jottabox/jottabox.sh" import "${1:-$HOME/Downloads/rom}"

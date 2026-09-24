@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+SRC="${1:-$HOME/Downloads/rom}"
+ENGINE="$HOME/.local/share/jottabox/jottabox.sh"
+ASSIST="$HOME/.config/jottabox-console/import_assistant.py"
+
+"$ENGINE" storage-check || exit 1
+
+# Todo .iso é classificado pelo usuário antes do importador legado.
+python3 "$ASSIST" "$SRC"
+
+# Os demais formatos continuam usando o importador estável já existente.
+exec "$ENGINE" import "$SRC"

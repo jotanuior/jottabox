@@ -1,0 +1,27 @@
+*.iso
+*.img
+*.qcow2
+*.raw
+*.log
+*.cache
+*.tmp
+*.rom
+*.zip
+*.7z
+
+**/cores/
+**/thumbnails/
+**/cache/
+**/Cache/
+**/Code Cache/
+**/GPUCache/
+**/Cookies
+**/History
+**/Sessions/
+**/Local Storage/
+
+id_rsa
+id_rsa.pub
+id_ed25519*
+authorized_keys
+known_hosts

@@ -1,0 +1,5 @@
+com.valvesoftware.Steam	1.0.0.85
+net.pcsx2.PCSX2	v2.8.2
+org.DolphinEmu.dolphin-emu	2606a
+org.libretro.RetroArch	1.22.2
+org.ppsspp.PPSSPP	1.20.4

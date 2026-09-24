@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+export PATH="/var/lib/flatpak/exports/bin:$HOME/.local/share/flatpak/exports/bin:$PATH"
+APP="$HOME/Applications/ES-DE_x64.AppImage"
+"$HOME/.local/share/jottabox/jottabox.sh" storage-check || exit 1
+if [[ -x "$APP" ]]; then
+  exec gamemoderun "$APP"
+fi
+zenity --error --title="JottaBox / ES-DE" --text="ES-DE não encontrado em:\n$APP"

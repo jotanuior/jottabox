@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+python3 "$HOME/.config/jottabox-console/fullscreen_policy.py" >/dev/null 2>&1 || true
+exec flatpak run net.pcsx2.PCSX2 -fullscreen "$1"

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=JottaBox
+Comment=JottaBox Game Console
+Exec=/home/jottabox/.local/bin/jottabox-console
+Terminal=false
+X-GNOME-Autostart-enabled=true
+Hidden=false

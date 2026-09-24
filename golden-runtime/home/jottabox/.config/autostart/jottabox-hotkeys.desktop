@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=JottaBox Hotkeys
+Comment=SELECT + START fecha o emulador e retorna ao JottaBox
+Exec=/home/jottabox/.local/bin/jottabox-hotkeys
+Terminal=false
+X-GNOME-Autostart-enabled=true
+Hidden=false

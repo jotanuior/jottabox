@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+EDGE="$(command -v microsoft-edge-stable || command -v microsoft-edge || true)"
+[[ -n "$EDGE" ]] || { zenity --error --text="Microsoft Edge não encontrado."; exit 1; }
+PROFILE="$HOME/.config/jottabox-edge-xcloud"
+mkdir -p "$PROFILE"
+exec "$EDGE" \
+  --user-data-dir="$PROFILE" \
+  --start-fullscreen \
+  --no-first-run \
+  --disable-session-crashed-bubble \
+  --disable-background-mode \
+  --disable-features=msEdgeStartupBoost \
+  --app="https://www.xbox.com/play"

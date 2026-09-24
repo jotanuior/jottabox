@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+ROM="${1:?Informe o jogo de PSP}"
+
+# Reaplica a política antes de abrir, caso o emulador tenha alterado a preferência.
+python3 "$HOME/.config/jottabox-console/fullscreen_policy.py" >/dev/null 2>&1 || true
+
+exec flatpak run org.ppsspp.PPSSPP --fullscreen "$ROM"

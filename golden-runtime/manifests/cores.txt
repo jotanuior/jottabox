@@ -1,0 +1,11 @@
+fbneo_libretro.so
+fceumm_libretro.so
+gambatte_libretro.so
+genesis_plus_gx_libretro.so
+mgba_libretro.so
+mupen64plus_next_libretro.so
+nestopia_libretro.so
+pcsx_rearmed_libretro.so
+picodrive_libretro.so
+snes9x_libretro.so
+swanstation_libretro.so

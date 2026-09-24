@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+python3 "$HOME/.config/jottabox-console/fullscreen_policy.py" >/dev/null 2>&1 || true
+exec flatpak run org.libretro.RetroArch --fullscreen "$@"
