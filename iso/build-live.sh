@@ -32,6 +32,18 @@ unsquashfs -d "$WORK/rootfs" "$WORK/filesystem.squashfs" >/dev/null
 echo ">>> Aplicando overlay JottaBox Live"
 rsync -a "$ROOT/rootfs-overlay/" "$WORK/rootfs/"
 
+echo ">>> Instalando dependencias do JottaBox no Live"
+
+cp -L /etc/resolv.conf "$WORK/rootfs/etc/resolv.conf"
+
+chroot "$WORK/rootfs" /bin/bash -c '
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get install -y --no-install-recommends python3-pygame rsync
+    apt-get clean
+    rm -rf /var/lib/apt/lists/*
+'
+
 echo ">>> Incorporando runtime JottaBox"
 tar -C "$WORK/runtime" -xzf "$RUNTIME"
 mkdir -p "$WORK/rootfs/opt/jottabox-live"

@@ -12,8 +12,14 @@ mkdir -p "$DST"
 copy_item() {
   local src="$1" rel="$2"
   [[ -e "$src" ]] || return 0
-  mkdir -p "$DST/$(dirname "$rel")"
-  rsync -a --copy-links "$src" "$DST/$rel"
+
+  if [[ -d "$src" ]]; then
+    mkdir -p "$DST/$rel"
+    rsync -a --copy-links "$src/" "$DST/$rel/"
+  else
+    mkdir -p "$DST/$(dirname "$rel")"
+    rsync -a --copy-links "$src" "$DST/$rel"
+  fi
 }
 
 echo ">>> Exportando runtime JottaBox de $SRC_HOME"

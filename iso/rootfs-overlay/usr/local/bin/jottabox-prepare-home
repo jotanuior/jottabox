@@ -23,8 +23,3 @@ fi
 chmod +x "$HOME/.local/bin"/jottabox-* "$HOME/.local/bin/gpbox" "$HOME/.local/bin/xbox-cloud" 2>/dev/null || true
 mkdir -p "$(dirname "$MARK")"
 touch "$MARK"
-
-# Atualiza apenas se houver rede. Falha de rede nunca impede o Live de abrir.
-if command -v curl >/dev/null 2>&1 && curl -fsS --max-time 3 https://raw.githubusercontent.com/jotanuior/jottabox/main/VERSION >/dev/null 2>&1; then
-  curl -fsSL "https://raw.githubusercontent.com/jotanuior/jottabox/main/bootstrap.sh?live=$(date +%s)" | bash || true
-fi
