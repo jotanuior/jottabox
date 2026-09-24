@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-RAW="https://raw.githubusercontent.com/jotanuior/jottabox/main"
+RAW="https://raw.githubusercontent.com/jotanuior/jottabox/stable"
+CHANNEL_FILE="channels/stable.json"
 STATE_DIR="$HOME/.local/share/jottabox"
 BIN_DIR="$HOME/.local/bin"
 TMP="$(mktemp -d)"
@@ -13,9 +14,6 @@ restart_jottabox() {
   local launcher="$BIN_DIR/jottabox-console"
   [[ -x "$launcher" ]] || return 0
 
-  # O atualizador pode estar rodando dentro do próprio launcher.
-  # Agenda o restart em uma nova sessão para sobreviver ao fechamento
-  # do JottaBox atual.
   setsid -f bash -lc "
     sleep 1.5
     pkill -f '[j]ottabox-console' 2>/dev/null || true
@@ -24,16 +22,16 @@ restart_jottabox() {
   " >"$HOME/.local/share/jottabox/restart.log" 2>&1 || true
 }
 
-curl -fsSL "$RAW/manifest.json" -o "$TMP/manifest.json"
+curl -fsSL "$RAW/$CHANNEL_FILE" -o "$TMP/channel.json"
 
-REMOTE="$(python3 - "$TMP/manifest.json" <<'PY'
+REMOTE="$(python3 - "$TMP/channel.json" <<'PY'
 import json,sys
 m=json.load(open(sys.argv[1],encoding="utf-8"))
 print(m["version"])
 PY
 )"
 
-SCRIPT="$(python3 - "$TMP/manifest.json" <<'PY'
+SCRIPT="$(python3 - "$TMP/channel.json" <<'PY'
 import json,sys
 m=json.load(open(sys.argv[1],encoding="utf-8"))
 print(m["update_script"])
@@ -46,8 +44,9 @@ if [[ -z "$LOCAL" && -f "$STATE_DIR/jottabox.sh" ]]; then
 fi
 [[ -n "$LOCAL" ]] || LOCAL="legado"
 
+echo "Canal:       stable"
 echo "Instalada:   $LOCAL"
-echo "Disponível: $REMOTE"
+echo "Disponível:  $REMOTE"
 
 if [[ "$LOCAL" == "$REMOTE" ]]; then
   echo "JottaBox já está atualizado."
@@ -56,7 +55,7 @@ fi
 
 echo
 echo "Novidades:"
-python3 - "$TMP/manifest.json" <<'PY'
+python3 - "$TMP/channel.json" <<'PY'
 import json,sys
 for n in json.load(open(sys.argv[1],encoding="utf-8")).get("notes",[]):
     print(" - "+n)
