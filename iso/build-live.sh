@@ -3,7 +3,8 @@ set -Eeuo pipefail
 
 BASE_ISO="${1:-}"
 RUNTIME="${2:-}"
-OUTPUT="${3:-$PWD/JottaBox-Live-0.1.0.iso}"
+LIVE_VERSION="$(cat "$ROOT/LIVE_VERSION" 2>/dev/null || echo 0.1.1)"
+OUTPUT="${3:-$PWD/JottaBox-Live-${LIVE_VERSION}.iso}"
 
 [[ -f "$BASE_ISO" ]] || { echo "Uso: sudo $0 linuxmint.iso jottabox-live-runtime.tar.gz [saida.iso]"; exit 2; }
 [[ -f "$RUNTIME" ]] || { echo "Runtime não encontrado: $RUNTIME"; exit 2; }
@@ -83,7 +84,7 @@ xorriso   -indev "$BASE_ISO"   -outdev "$OUTPUT"   -boot_image any replay   -map
 
 echo
 echo "=============================================="
-echo " JottaBox Live 0.1.0 criada"
+echo " JottaBox Live $LIVE_VERSION criada"
 echo "=============================================="
 echo "ISO: $OUTPUT"
 du -h "$OUTPUT"
