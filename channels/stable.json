@@ -1,0 +1,15 @@
+{
+  "name": "JottaBox",
+  "channel": "stable",
+  "version": "0.10.12",
+  "update_script": "releases/0.10.12/update.sh",
+  "minimum_version": "legacy",
+  "notes": [
+    "Fullscreen passa a ser política padrão do JottaBox",
+    "PPSSPP abre com --fullscreen",
+    "RetroArch força video_fullscreen=true",
+    "Dolphin é configurado para fullscreen",
+    "PCSX2 é configurado para iniciar em fullscreen",
+    "Wrappers de emuladores reaplicam a política antes de abrir o jogo"
+  ]
+}
