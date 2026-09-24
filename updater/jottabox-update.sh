@@ -53,6 +53,24 @@ if [[ "$LOCAL" == "$REMOTE" ]]; then
   exit 0
 fi
 
+# Nunca fazer downgrade automático/acidental.
+if [[ "$LOCAL" != "legado" ]]; then
+  cmp="$(python3 - "$LOCAL" "$REMOTE" <<'PY'
+import re,sys
+def v(s):
+    nums=[int(x) for x in re.findall(r'\d+', s)]
+    return tuple(nums + [0] * (3-len(nums)))
+a,b=v(sys.argv[1]),v(sys.argv[2])
+print(1 if a>b else 0)
+PY
+)"
+  if [[ "$cmp" == "1" ]]; then
+    echo "A versão instalada é mais nova que o canal stable."
+    echo "Nenhum downgrade será realizado."
+    exit 0
+  fi
+fi
+
 echo
 echo "Novidades:"
 python3 - "$TMP/channel.json" <<'PY'
