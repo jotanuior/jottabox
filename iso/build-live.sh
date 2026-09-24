@@ -101,7 +101,31 @@ set -Eeuo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
-apt-get update
+UPDATE_OK=0
+
+for ATTEMPT in 1 2 3 4 5; do
+    echo ">>> apt update tentativa $ATTEMPT/5"
+
+    rm -rf /var/lib/apt/lists/*
+    mkdir -p /var/lib/apt/lists/partial
+
+    if apt-get \
+        -o Acquire::Retries=3 \
+        -o Acquire::http::No-Cache=true \
+        update
+    then
+        UPDATE_OK=1
+        break
+    fi
+
+    echo ">>> Espelho em sincronização. Aguardando 30 segundos..."
+    sleep 30
+done
+
+if [[ "$UPDATE_OK" != "1" ]]; then
+    echo "ERRO: não foi possível atualizar os índices APT após 5 tentativas."
+    exit 1
+fi
 
 apt-get install -y --no-install-recommends \
     python3-pygame \
