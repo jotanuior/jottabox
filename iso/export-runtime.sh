@@ -60,17 +60,17 @@ s = p.read_text()
 
 s = s.replace(
     '"organize":load_img("library_organize.png"),',
-    '"organize":load_img("library_organize.png"),\n "external":load_img("library_import.png"),'
+    '"organize":load_img("library_organize.png"),\n "external":load_img("library_import.png"),\n "romstorage":load_img("library_import.png"),'
 )
 
 s = s.replace(
     '("organize",os.path.join(BIN,"jottabox-clean-roms")),\n ("back","__back__"),',
-    '("organize",os.path.join(BIN,"jottabox-clean-roms")),\n ("external","/usr/local/bin/jottabox-external-roms"),\n ("back","__back__"),'
+    '("organize",os.path.join(BIN,"jottabox-clean-roms")),\n ("external","/usr/local/bin/jottabox-external-roms"),\n ("romstorage","/usr/local/bin/jottabox-rom-storage"),\n ("back","__back__"),'
 )
 
 s = s.replace(
     '"back":("VOLTAR","Retornar à Home","←"),',
-    '"external":("FONTES EXTERNAS","Usar ROMs de HD/SSD sem copiar","▣"),\n "back":("VOLTAR","Retornar à Home","←"),'
+    '"external":("FONTES EXTERNAS","Usar ROMs existentes sem copiar","▣"),\n "romstorage":("ARMAZENAMENTO DE ROMS","Salvar ROMs permanentemente em HD/SSD","▣"),\n "back":("VOLTAR","Retornar à Home","←"),'
 )
 
 # No Live, não bloquear o loop do Pygame enquanto Steam e outros apps ficam abertos.
@@ -103,25 +103,62 @@ PYLIVE
 XCLOUD="$DST/.local/bin/xbox-cloud"
 
 if [[ -f "$XCLOUD" ]]; then
-python3 - "$XCLOUD" <<'PYXCLOUD'
-from pathlib import Path
-import sys
+cat > "$XCLOUD" <<'SHXCLOUD'
+#!/usr/bin/env bash
+set -Eeuo pipefail
 
-p = Path(sys.argv[1])
-s = p.read_text()
+EDGE="$(command -v microsoft-edge-stable || command -v microsoft-edge || true)"
 
-s = s.replace(
-    '--start-fullscreen \\',
-    '--start-fullscreen \\\n  --kiosk \\'
+[[ -n "$EDGE" ]] || {
+    zenity --error --text="Microsoft Edge não encontrado."
+    exit 1
+}
+
+PROFILE="$HOME/.config/jottabox-edge-xcloud"
+MARK="$PROFILE/.better-xcloud-first-run"
+
+mkdir -p "$PROFILE"
+
+XBOX_URL="https://www.xbox.com/play"
+BETTER_FILE="/opt/jottabox-live/better-xcloud.user.js"
+
+COMMON=(
+    --user-data-dir="$PROFILE"
+    --no-first-run
+    --disable-session-crashed-bubble
+    --disable-background-mode
+    --disable-features=msEdgeStartupBoost
 )
 
-s = s.replace(
-    '--app="[https://www.xbox.com/play](https://www.xbox.com/play)"',
-    '--app="https://www.xbox.com/play"'
-)
+# Primeiro uso: abre o userscript para o Tampermonkey instalar.
+if [[ ! -f "$MARK" && -f "$BETTER_FILE" ]]; then
+    "$EDGE" \
+        "${COMMON[@]}" \
+        "file://$BETTER_FILE" &
 
-p.write_text(s)
-PYXCLOUD
+    zenity \
+        --info \
+        --title="Better xCloud" \
+        --width=520 \
+        --text="Primeiro uso do XCloud.
+
+O Tampermonkey abrirá a tela de instalação do Better xCloud.
+
+Clique em Instalar.
+
+Depois feche essa janela do Edge e pressione OK aqui."
+
+    touch "$MARK"
+fi
+
+exec "$EDGE" \
+    "${COMMON[@]}" \
+    --start-fullscreen \
+    --kiosk \
+    --app="$XBOX_URL"
+SHXCLOUD
+
+chmod +x "$XCLOUD"
 fi
 
 fi

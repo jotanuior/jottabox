@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+command -v zenity >/dev/null 2>&1 || exit 1
+command -v udisksctl >/dev/null 2>&1 || exit 1
+
+TMP="$(mktemp)"
+trap 'rm -f "$TMP"' EXIT
+
+python3 - > "$TMP" <<'PY'
+import json
+import subprocess
+
+data = json.loads(subprocess.check_output([
+    "lsblk", "-J", "-o",
+    "PATH,TYPE,FSTYPE,LABEL,SIZE,MOUNTPOINTS,RO"
+]))
+
+def walk(items):
+    for x in items:
+        if (
+            x.get("type") == "part"
+            and x.get("fstype") not in (None, "", "swap", "squashfs", "iso9660")
+            and not x.get("ro")
+        ):
+            mounts = x.get("mountpoints") or []
+            mount = next((m for m in mounts if m), "")
+            print("|".join([
+                x.get("path") or "",
+                x.get("label") or "Sem nome",
+                x.get("fstype") or "",
+                x.get("size") or "",
+                mount
+            ]))
+        walk(x.get("children") or [])
+
+walk(data.get("blockdevices") or [])
+PY
+
+ARGS=()
+
+while IFS='|' read -r DEV LABEL FS SIZE MNT; do
+    [[ -n "$DEV" ]] || continue
+
+    # Não oferecer a mídia Live como armazenamento.
+    [[ "$MNT" == "/cdrom" ]] && continue
+
+    ARGS+=(
+        "$DEV"
+        "$LABEL"
+        "$FS"
+        "$SIZE"
+        "${MNT:-Não montado}"
+    )
+done < "$TMP"
+
+[[ ${#ARGS[@]} -gt 0 ]] || {
+    zenity \
+        --info \
+        --title="JottaBox" \
+        --text="Nenhum disco gravável disponível."
+    exit 0
+}
+
+DEV="$(
+    zenity \
+        --list \
+        --title="Armazenamento de ROMs" \
+        --text="Escolha onde o JottaBox deve armazenar as ROMs" \
+        --width=900 \
+        --height=500 \
+        --column="Dispositivo" \
+        --column="Nome" \
+        --column="Sistema" \
+        --column="Tamanho" \
+        --column="Montagem" \
+        "${ARGS[@]}"
+)" || exit 0
+
+[[ -n "$DEV" ]] || exit 0
+
+MNT="$(
+    lsblk -nrpo MOUNTPOINTS "$DEV" |
+    awk 'NF { print; exit }'
+)"
+
+if [[ -z "$MNT" ]]; then
+    udisksctl mount -b "$DEV" >/dev/null
+
+    MNT="$(
+        lsblk -nrpo MOUNTPOINTS "$DEV" |
+        awk 'NF { print; exit }'
+    )"
+fi
+
+[[ -d "$MNT" ]] || {
+    zenity \
+        --error \
+        --title="JottaBox" \
+        --text="Não foi possível montar o disco."
+    exit 1
+}
+
+TARGET="$MNT/JottaBox-ROMs"
+
+mkdir -p "$TARGET"
+
+# Teste real de escrita.
+TESTFILE="$TARGET/.jottabox-write-test-$$"
+
+if ! touch "$TESTFILE" 2>/dev/null; then
+    zenity \
+        --error \
+        --title="JottaBox" \
+        --text="O disco foi montado, mas não permite gravação."
+    exit 1
+fi
+
+rm -f "$TESTFILE"
+
+# Se ~/ROMs for diretório real, preserva o conteúdo.
+if [[ -d "$HOME/ROMs" && ! -L "$HOME/ROMs" ]]; then
+    if find "$HOME/ROMs" -mindepth 1 -print -quit | grep -q .; then
+        rsync -a "$HOME/ROMs/" "$TARGET/"
+    fi
+
+    rm -rf "$HOME/ROMs"
+elif [[ -L "$HOME/ROMs" ]]; then
+    rm -f "$HOME/ROMs"
+fi
+
+ln -s "$TARGET" "$HOME/ROMs"
+
+mkdir -p "$HOME/.config/jottabox-console"
+
+cat > "$HOME/.config/jottabox-console/rom-storage.conf" <<CFG
+DEVICE=$DEV
+MOUNTPOINT=$MNT
+ROM_PATH=$TARGET
+CFG
+
+zenity \
+    --info \
+    --title="JottaBox" \
+    --text="Armazenamento configurado.
+
+Disco: $DEV
+Pasta: $TARGET
+
+As ROMs agora serão salvas permanentemente neste disco."

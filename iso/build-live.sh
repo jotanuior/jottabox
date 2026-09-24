@@ -145,6 +145,23 @@ apt-get clean
 rm -rf /var/lib/apt/lists/*
 '
 
+echo ">>> Baixando Better xCloud"
+
+BETTER_XCLOUD_URL="https://github.com/redphx/better-xcloud/releases/latest/download/better-xcloud.user.js"
+
+mkdir -p "$WORK/rootfs/opt/jottabox-live"
+
+curl -fL \
+    --retry 3 \
+    --retry-delay 3 \
+    "$BETTER_XCLOUD_URL" \
+    -o "$WORK/rootfs/opt/jottabox-live/better-xcloud.user.js"
+
+[[ -s "$WORK/rootfs/opt/jottabox-live/better-xcloud.user.js" ]] || {
+    echo "ERRO: Better xCloud não foi baixado."
+    exit 1
+}
+
 echo ">>> Incorporando runtime JottaBox"
 
 tar \
@@ -172,6 +189,7 @@ chmod +x \
     "$WORK/rootfs/usr/local/bin/jottabox-install-system" \
     "$WORK/rootfs/usr/local/bin/jottabox-autostart" \
     "$WORK/rootfs/usr/local/bin/jottabox-external-roms" \
+    "$WORK/rootfs/usr/local/bin/jottabox-rom-storage" \
     2>/dev/null || true
 
 echo ">>> Incorporando Flatpaks do golden master"
