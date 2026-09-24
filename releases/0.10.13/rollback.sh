@@ -6,11 +6,11 @@ TO_VERSION="0.10.12"
 STATE="$HOME/.local/share/jottabox"
 BIN="$HOME/.local/bin"
 
-BACKUP="$(ls -dt "$STATE"/backups/\${FROM_VERSION}-* 2>/dev/null | head -n1 || true)"
+BACKUP="$(ls -dt "$STATE"/backups/${FROM_VERSION}-* 2>/dev/null | head -n1 || true)"
 
 if [[ -z "$BACKUP" || ! -d "$BACKUP" ]]; then
   echo "ERRO: nenhum backup de $FROM_VERSION foi encontrado."
-  echo "Esperado em: $STATE/backups/\${FROM_VERSION}-*"
+  echo "Esperado em: $STATE/backups/${FROM_VERSION}-*"
   exit 1
 fi
 
