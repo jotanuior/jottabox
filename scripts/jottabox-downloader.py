@@ -172,37 +172,223 @@ def dest_for_url(url,base_root=None,direct=False):
     rel=urllib.parse.unquote(up.path[len(base_path):]).lstrip("/") if up.path.startswith(base_path) else urllib.parse.unquote(up.path).lstrip("/")
     return os.path.join(DEST,rel.replace("..","_"))
 
-def progress_screen(label,done=0,total=0):
-    draw_bg(); header("Downloads",label); w=int(W*.68); h=36; x=(W-w)//2; y=int(H*.5)
-    alpha_rect(pygame.Rect(x,y,w,h),(4,18,40,220),18); pct=(done/total) if total else 0
-    pygame.draw.rect(screen,CYAN,(x,y,int(w*max(0,min(1,pct))),h),border_radius=18)
-    if total:
-        s=txt(f"{done}/{total}",F_BODY); screen.blit(s,((W-s.get_width())//2,y+55))
-    pygame.display.flip(); pygame.event.pump()
+def progress_screen(label,done=0,total=0,file_pct=None,file_index=None,file_total=None):
+    draw_bg()
+    header("Downloads",label)
 
-def download_one(url,base_root=None,direct=False):
-    dest=dest_for_url(url,base_root,direct); os.makedirs(os.path.dirname(dest),exist_ok=True)
-    progress_screen("Baixando "+os.path.basename(dest))
-    cmd=["wget","--continue","--tries=3","--timeout=30","--read-timeout=30","--waitretry=5","-O",dest,url]
+    w=int(W*.68)
+    h=36
+    x=(W-w)//2
+    y=int(H*.5)
+
+    alpha_rect(
+        pygame.Rect(x,y,w,h),
+        (4,18,40,220),
+        18
+    )
+
+    if file_pct is not None:
+        pct=max(0,min(100,int(file_pct)))
+        ratio=pct/100.0
+    else:
+        ratio=(done/total) if total else 0
+        pct=int(ratio*100)
+
+    pygame.draw.rect(
+        screen,
+        CYAN,
+        (x,y,int(w*max(0,min(1,ratio))),h),
+        border_radius=18
+    )
+
+    pct_surface=txt(f"{pct}%",F_BODY)
+    screen.blit(
+        pct_surface,
+        (
+            W//2-pct_surface.get_width()//2,
+            y+52
+        )
+    )
+
+    if file_index is not None and file_total:
+        info=txt(
+            f"Arquivo {file_index} de {file_total}",
+            F_SMALL,
+            MUTED
+        )
+    elif total:
+        info=txt(
+            f"{done}/{total} arquivos",
+            F_SMALL,
+            MUTED
+        )
+    else:
+        info=None
+
+    if info:
+        screen.blit(
+            info,
+            (
+                W//2-info.get_width()//2,
+                y+88
+            )
+        )
+
+    pygame.display.flip()
+    pygame.event.pump()
+
+
+def download_one(url,base_root=None,direct=False,file_index=1,file_total=1):
+    dest=dest_for_url(url,base_root,direct)
+    os.makedirs(os.path.dirname(dest),exist_ok=True)
+
+    filename=urllib.parse.unquote(
+        os.path.basename(
+            urllib.parse.urlparse(url).path.rstrip("/")
+        )
+    )
+
+    cmd=[
+        "wget",
+        "--continue",
+        "--tries=3",
+        "--timeout=30",
+        "--read-timeout=30",
+        "--waitretry=5",
+        "--progress=bar:force:noscroll",
+        "-O",
+        dest,
+        url
+    ]
+
+    progress_screen(
+        "Baixando "+filename,
+        file_pct=0,
+        file_index=file_index,
+        file_total=file_total
+    )
+
     with open(LOG,"a",encoding="utf-8") as log:
-        log.write(f"\n===== ARQUIVO {url} =====\n"); p=subprocess.run(cmd,stdout=log,stderr=subprocess.STDOUT)
-    add_history(url,os.path.basename(dest),"ok" if p.returncode in (0,8) else "error")
-    return p.returncode,dest
+        log.write(f"\n===== ARQUIVO {url} =====\n")
+
+        proc=subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=0
+        )
+
+        buf=""
+        last_pct=-1
+
+        while True:
+            ch=proc.stdout.read(1)
+
+            if ch:
+                log.write(ch)
+                log.flush()
+
+                if ch in ("\r","\n"):
+                    line=buf
+                    buf=""
+
+                    matches=re.findall(r'(\d{1,3})%',line)
+
+                    if matches:
+                        try:
+                            pct=max(
+                                0,
+                                min(100,int(matches[-1]))
+                            )
+
+                            if pct != last_pct:
+                                last_pct=pct
+
+                                progress_screen(
+                                    "Baixando "+filename,
+                                    file_pct=pct,
+                                    file_index=file_index,
+                                    file_total=file_total
+                                )
+                        except Exception:
+                            pass
+                else:
+                    buf+=ch
+
+                    if len(buf)>4096:
+                        buf=buf[-2048:]
+
+            elif proc.poll() is not None:
+                break
+
+            # Mantém o Pygame respondendo durante downloads grandes.
+            pygame.event.pump()
+
+        rc=proc.wait()
+
+    if rc == 0:
+        progress_screen(
+            "Concluído: "+filename,
+            file_pct=100,
+            file_index=file_index,
+            file_total=file_total
+        )
+
+    add_history(
+        url,
+        os.path.basename(dest),
+        "ok" if rc in (0,8) else "error"
+    )
+
+    return rc,dest
+
 
 def run_folder_download(root,chosen):
     allfiles=[]
+
     for e in chosen:
-        if e["kind"]=="file": allfiles.append(e["url"])
-        else: allfiles.extend(crawl_files(e["url"],root,lambda s:progress_screen(s)))
+        if e["kind"]=="file":
+            allfiles.append(e["url"])
+        else:
+            allfiles.extend(
+                crawl_files(
+                    e["url"],
+                    root,
+                    lambda msg:progress_screen(msg)
+                )
+            )
+
     allfiles=list(dict.fromkeys(allfiles))
-    if not allfiles: return False,"Nenhum arquivo compatível encontrado."
+
+    if not allfiles:
+        return False,"Nenhum arquivo compatível encontrado."
+
     errors=[]
+    total=len(allfiles)
+
     for i,url in enumerate(allfiles,1):
-        progress_screen("Baixando "+urllib.parse.unquote(url.rsplit("/",1)[-1]),i-1,len(allfiles))
-        rc,_=download_one(url,root,False)
-        if rc not in (0,8): errors.append(url)
-    progress_screen("Downloads finalizados",len(allfiles),len(allfiles))
-    return (not errors, f"{len(allfiles)-len(errors)}/{len(allfiles)} arquivo(s) concluído(s).")
+        rc,_=download_one(
+            url,
+            root,
+            False,
+            file_index=i,
+            file_total=total
+        )
+
+        if rc not in (0,8):
+            errors.append(url)
+
+    progress_screen(
+        "Downloads finalizados",
+        total,
+        total
+    )
+
+    return (
+        not errors,
+        f"{total-len(errors)}/{total} arquivo(s) concluído(s)."
+    )
 
 def input_text(title,current="",subtitle="Use o teclado físico para digitar ou colar"):
     val=current
