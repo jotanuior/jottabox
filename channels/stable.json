@@ -1,16 +1,16 @@
 {
   "name": "JottaBox",
   "channel": "stable",
-  "version": "0.10.15",
-  "update_script": "releases/0.10.15/update.sh",
-  "rollback_script": "releases/0.10.15/rollback.sh",
+  "version": "0.10.16",
+  "update_script": "releases/0.10.16/update.sh",
+  "rollback_script": "releases/0.10.16/rollback.sh",
   "minimum_version": "0.10.13",
   "notes": [
-    "Downloader agora mostra progresso real de cada arquivo",
-    "Downloads ISO, ZIP e 7Z passam pelo assistente de importação",
-    "Arquivos compactados contendo ISO são detectados",
-    "Adiciona classificação para PlayStation 3",
-    "ZIP e 7Z com uma única ISO podem ser extraídos durante a importação",
-    "Mantém o novo editor visual de configuração de controles"
+    "Instala RPCS3 automaticamente",
+    "Adiciona suporte a PlayStation 3 no JottaBox",
+    "Cria launcher próprio para RPCS3",
+    "Integra PlayStation 3 ao ES-DE",
+    "Mantém correções do downloader e importador da 0.10.15",
+    "Mantém editor visual de controles"
   ]
 }
