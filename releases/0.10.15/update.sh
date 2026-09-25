@@ -56,7 +56,21 @@ rollback_on_error() {
     restore_file "$STATE/VERSION" "VERSION"
 }
 
-trap rollback_on_error ERR INT TERM
+on_error() {
+    local rc=$?
+    echo
+    echo "=================================================="
+    echo "FALHA NA ATUALIZACAO"
+    echo "Linha: $1"
+    echo "Comando: $2"
+    echo "Codigo: $rc"
+    echo "=================================================="
+    rollback_on_error
+    exit "$rc"
+}
+
+trap 'on_error "$LINENO" "$BASH_COMMAND"' ERR
+trap rollback_on_error INT TERM
 
 echo ">>> Atualizando JottaBox para $VERSION_NEW"
 
