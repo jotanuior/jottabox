@@ -1,15 +1,16 @@
 {
   "name": "JottaBox",
   "channel": "stable",
-  "version": "0.10.14",
-  "update_script": "releases/0.10.14/update.sh",
-  "rollback_script": "releases/0.10.14/rollback.sh",
+  "version": "0.10.15",
+  "update_script": "releases/0.10.15/update.sh",
+  "rollback_script": "releases/0.10.15/rollback.sh",
   "minimum_version": "0.10.13",
   "notes": [
-    "Novo editor visual de configuração de controles",
-    "Mantém perfis separados por tipo de controle",
-    "Permite remapear apenas um botão sem reiniciar toda a configuração",
-    "Adiciona tela de teste antes de salvar",
-    "Detecta conflitos de botões duplicados"
+    "Downloader agora mostra progresso real de cada arquivo",
+    "Downloads ISO, ZIP e 7Z passam pelo assistente de importação",
+    "Arquivos compactados contendo ISO são detectados",
+    "Adiciona classificação para PlayStation 3",
+    "ZIP e 7Z com uma única ISO podem ser extraídos durante a importação",
+    "Mantém o novo editor visual de configuração de controles"
   ]
 }

@@ -344,6 +344,59 @@ def download_one(url,base_root=None,direct=False,file_index=1,file_total=1):
     return rc,dest
 
 
+
+def run_import_assistant():
+    candidates = [
+        os.path.join(
+            HOME,
+            ".config",
+            "jottabox-console",
+            "import_assistant.py"
+        ),
+        os.path.join(
+            HOME,
+            ".local",
+            "share",
+            "jottabox",
+            "jottabox-import-assistant.py"
+        ),
+        os.path.join(
+            HOME,
+            ".local",
+            "bin",
+            "jottabox-import-assistant"
+        ),
+    ]
+
+    for script in candidates:
+        if os.path.isfile(script):
+            try:
+                if script.endswith(".py"):
+                    subprocess.run(
+                        [sys.executable, script, DEST],
+                        check=False
+                    )
+                else:
+                    subprocess.run(
+                        [script, DEST],
+                        check=False
+                    )
+                return True
+            except Exception as e:
+                with open(LOG,"a",encoding="utf-8") as log:
+                    log.write(
+                        f"\nERRO abrindo import assistant: {e}\n"
+                    )
+                return False
+
+    with open(LOG,"a",encoding="utf-8") as log:
+        log.write(
+            "\nImport assistant não encontrado.\n"
+        )
+
+    return False
+
+
 def run_folder_download(root,chosen):
     allfiles=[]
 
@@ -384,6 +437,17 @@ def run_folder_download(root,chosen):
         total,
         total
     )
+
+    # ISOs precisam ser classificados antes de entrar na biblioteca.
+    downloaded_importable = any(
+        urllib.parse.urlparse(url).path.lower().rstrip("/").endswith(
+            (".iso",".zip",".7z")
+        )
+        for url in allfiles
+    )
+
+    if downloaded_importable and not errors:
+        run_import_assistant()
 
     return (
         not errors,
@@ -456,6 +520,12 @@ def browser_mode(initial=""):
             try:
                 file_url,name=normalize_file(current)
                 rc,dest=download_one(file_url,None,True)
+
+                if rc in (0,8) and dest.lower().endswith(
+                    (".iso",".zip",".7z")
+                ):
+                    run_import_assistant()
+
                 message=("Concluído: " if rc in (0,8) else "Falha: ")+os.path.basename(dest)
             except Exception as ex:
                 message="Erro: "+str(ex)
